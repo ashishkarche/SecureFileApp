@@ -37,7 +37,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
     run this command                        
     ```java
-    cd C:\Users\ashis\OneDrive\Documents\Project\src\main\java\com\securefile
+    cd src\main\java\com\securefile
     ``` 
      
     ```java
