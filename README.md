@@ -1,4 +1,4 @@
-#  Secure File Storage on Cloud using hybrid & multiparty Method
+# Secure File Storage on Cloud using hybrid & multiparty Method
 
 1. `cloud service` - [Google Cloud](https://chat.openai.com/share/a350d15e-28c1-4e20-b82e-7c73cbffef0f), [Overview](https://www.geeksforgeeks.org/an-overview-of-cloud-cryptography/), [Links](https://cloud.google.com/docs/)
 
@@ -36,6 +36,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
    ##### Step 1 -
 
    add Google Cloud dependencies in your pom.xml & sync pom.xml (if dependencies already sync then no need to do step 1 , you can direcly go on step-2)
+
    ```xml
    <dependencyManagement>
    <dependencies>
@@ -48,26 +49,29 @@ Encrypted data can be stored safely or transferred to a third party for analysis
    </dependency>
    </dependencies>
    </dependencyManagement>
+   ```
 
-  <dependencies>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-storage</artifactId>
-    </dependency>
-  </dependencies>
-      ```
-                            
-    ##### Step 2 -
+   ```xml
+     <dependencies>
+       <dependency>
+         <groupId>com.google.cloud</groupId>
+         <artifactId>google-cloud-storage</artifactId>
+       </dependency>
+     </dependencies>
+   ```
 
-    run this command
-    ```java
-    cd src\main\java\com\securefile
-    ```
+   ##### Step 2 -
 
-    ```java
-    javac *.java
-    ```
+   run this command
 
-    ```java
-    java Main
-    ```
+   ```java
+   cd src\main\java\com\securefile
+   ```
+
+   ```java
+   javac *.java
+   ```
+
+   ```java
+   java Main
+   ```
