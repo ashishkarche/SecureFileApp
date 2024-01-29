@@ -1,4 +1,4 @@
-# Secure File Storage on Cloud using hybrid & multiparty Method
+# Secure File Storage on Cloud using hybrid cryptography & multiparty Method
 
 1. `cloud service` - [Google Cloud](https://chat.openai.com/share/a350d15e-28c1-4e20-b82e-7c73cbffef0f), [Overview](https://www.geeksforgeeks.org/an-overview-of-cloud-cryptography/), [Links](https://cloud.google.com/docs/)
 
