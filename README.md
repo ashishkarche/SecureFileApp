@@ -40,6 +40,10 @@ Encrypted data can be stored safely or transferred to a third party for analysis
     cd src\main\java\com\securefile\Main.java
     ``` 
      
-    `javac *.java`, 
+    ```java
+    javac *.java
+    ``` 
     
-    `java Main`. 
+    ```java
+    java Main
+    ```
