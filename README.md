@@ -51,7 +51,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
 Create sql data base by name `filedatabase` (if database is alreay created then no need to create database) 
 or
-just import created database to xampp server link is given in `step 4`.
+just import created database to xampp server, link is given in `step 4`.
 
 ```sql
 -- Create the database
