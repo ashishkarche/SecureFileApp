@@ -21,11 +21,10 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 ![Example](src/main/resources/image/2.png)
 ![Example](src/main/resources/image/3.png)
 
-6. `File Transfer Service Method` - [Email Attachments, Cloud Storage & Share Service](https://cloud.google.com/appengine/docs/legacy/standard/java/mail/mail-with-headers-attachments), [Explanation](https://ieeexplore.ieee.org/iel7/6287639/8948470/09262897.pdf)
 
-7. `Code Language & server` - Java & Xampp Server
+3. `Code Language & server` - Java & Xampp Server
 
-8. `How To Run This Code` -
+4. `How To Run This Code` -
 
    ##### Step 1 -
 
