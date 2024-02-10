@@ -9,20 +9,20 @@ import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.security.SecureRandom;
+import javax.crypto.SecretKey;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.*;
 
 public class Main {
 
@@ -39,11 +39,15 @@ public class Main {
     private static SecretKey aesSecretKey;
     private static SecretKey desSecretKey;
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(Main::createAndShowLoginGUI);
-    }
+    // private static final String encryptedFilePath = "encrypted_file.txt";
+    // private static final String decryptedFilePath = "decrypted_file.txt";
 
-    // GUI Components & Functions
+    private static final String BUCKET_NAME = "your_bucket_name"; // Replace with your GCS bucket name
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> createAndShowLoginGUI());
+    }
+// GUI Components & Functions
     private static void createAndShowLoginGUI() {
         // Create the main login frame
         loginFrame = new JFrame("Login");
@@ -139,7 +143,7 @@ public class Main {
         fileUploadFrame.setLayout(new GridBagLayout());
 
         JLabel plusSignLabel = new JLabel(new ImageIcon("src/main/resources/plus.png")); // Replace "plus.png" with
-        // your plus sign image
+                                                                                              // your plus sign image
         // file
         uploadLabel = new JLabel("Upload File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -169,7 +173,7 @@ public class Main {
         // Initially, hide the frames
         registrationFrame.setVisible(false);
         fileUploadFrame.setVisible(false);
-        /* Backend Code */
+/* Backend Code */ 
         // Action listeners
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -203,7 +207,7 @@ public class Main {
             }
         });
 
-        encryptButton.addActionListener(new ActionListener() {
+    encryptButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String filePath = (String) plusSignLabel.getClientProperty("filePath");
@@ -219,26 +223,23 @@ public class Main {
                         // Encrypt the file data using AES
                         byte[] encryptedDataAES = encryptAES(fileData);
 
+                        // Save the encrypted data to a new file
+                        Path encryptedFilePathAES = Paths.get("encrypted_file_aes.txt");
+                        Files.write(encryptedFilePathAES, encryptedDataAES, StandardOpenOption.CREATE);
+
+                        uploadLabel.setText("File Encrypted (AES) and Saved: " + encryptedFilePathAES.getFileName());
+
                         // Generate DES key
                         generateDESKey();
 
                         // Encrypt the file data using DES
                         byte[] encryptedDataDES = encryptDES(fileData);
 
-                        // Combine both encrypted data
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        outputStream.write(encryptedDataAES);
-                        outputStream.write(encryptedDataDES);
-                        byte[] combinedEncryptedData = outputStream.toByteArray();
+                        // Save the encrypted data to a new file
+                        Path encryptedFilePathDES = Paths.get("encrypted_file_des.txt");
+                        Files.write(encryptedFilePathDES, encryptedDataDES, StandardOpenOption.CREATE);
 
-                        // Save the combined encrypted data to a new file
-                        Path encryptedFilePath = Paths.get("encrypted_file.txt");
-                        Files.write(encryptedFilePath, combinedEncryptedData, StandardOpenOption.CREATE);
-
-                        // Upload the file and encrypted data to the server
-                        uploadFileToServer(filePath, combinedEncryptedData);
-
-                        uploadLabel.setText("File Encrypted (AES & DES) and Uploaded to Server");
+                        uploadLabel.setText("File Encrypted (DES) and Saved: " + encryptedFilePathDES.getFileName());
                     } catch (IOException | GeneralSecurityException ex) {
                         ex.printStackTrace();
                         uploadLabel.setText("Error during encryption.");
@@ -252,37 +253,34 @@ public class Main {
         decryptButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Download the encrypted file from the server
-                byte[] combinedEncryptedData = downloadFileFromServer();
+                try {
+                    // Read the encrypted data from the file (AES)
+                    byte[] encryptedDataAES = Files.readAllBytes(Paths.get("encrypted_file_aes.txt"));
 
-                if (combinedEncryptedData != null) {
-                    try {
-                        // Split the combined encrypted data into AES and DES encrypted data
-                        int halfLength = combinedEncryptedData.length / 2;
-                        byte[] encryptedDataAES = Arrays.copyOfRange(combinedEncryptedData, 0, halfLength);
-                        byte[] encryptedDataDES = Arrays.copyOfRange(combinedEncryptedData, halfLength, combinedEncryptedData.length);
+                    // Decrypt the data (AES)
+                    byte[] decryptedDataAES = decryptAES(encryptedDataAES);
 
-                        // Decrypt the AES encrypted data
-                        byte[] decryptedDataAES = decryptAES(encryptedDataAES);
+                    // Save the decrypted data to a new file
+                    Path decryptedFilePathAES = Paths.get("decrypted_file_aes.txt");
+                    Files.write(decryptedFilePathAES, decryptedDataAES, StandardOpenOption.CREATE);
 
-                        // Decrypt the DES encrypted data
-                        byte[] decryptedDataDES = decryptDES(encryptedDataDES);
+                    uploadLabel.setText("File Decrypted (AES) and Saved: " + decryptedFilePathAES.getFileName());
 
-                        // Save the decrypted data to a new file
-                        Path decryptedFilePath = Paths.get("decrypted_file.txt");
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        outputStream.write(decryptedDataAES);
-                        outputStream.write(decryptedDataDES);
-                        byte[] combinedDecryptedData = outputStream.toByteArray();
-                        Files.write(decryptedFilePath, combinedDecryptedData, StandardOpenOption.CREATE);
+                    // Read the encrypted data from the file (DES)
+                    byte[] encryptedDataDES = Files.readAllBytes(Paths.get("encrypted_file_des.txt"));
 
-                        uploadLabel.setText("File Decrypted and Saved: " + decryptedFilePath.getFileName());
-                    } catch (GeneralSecurityException | IOException ex) {
-                        ex.printStackTrace();
-                        uploadLabel.setText("Error during decryption.");
-                    }
-                } else {
-                    uploadLabel.setText("Error: Unable to download the encrypted file from the server.");
+                    // Decrypt the data (DES)
+                    byte[] decryptedDataDES = decryptDES(encryptedDataDES);
+
+                    // Save the decrypted data to a new file
+                    Path decryptedFilePathDES = Paths.get("decrypted_file_des.txt");
+                    Files.write(decryptedFilePathDES, decryptedDataDES, StandardOpenOption.CREATE);
+
+                    uploadLabel.setText("File Decrypted (DES) and Saved: " + decryptedFilePathDES.getFileName());
+
+                } catch (IOException | GeneralSecurityException ex) {
+                    ex.printStackTrace();
+                    uploadLabel.setText("Error during decryption.");
                 }
             }
         });
@@ -303,6 +301,9 @@ public class Main {
 
                     // Set the file path in the plusSignLabel's client property
                     plusSignLabel.putClientProperty("filePath", filePath);
+
+                    // Encrypt and upload the file to Google Cloud Storage
+                    encryptAndUploadFile(filePath);
                 }
             }
         });
@@ -325,76 +326,111 @@ public class Main {
         registrationFrame.setVisible(false);
     }
 
+
     private static void generateAESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(256);
+        SecureRandom secureRandom = new SecureRandom();
+        keyGen.init(256, secureRandom);
         aesSecretKey = keyGen.generateKey();
     }
 
     private static void generateDESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-        keyGen.init(56);
+        SecureRandom secureRandom = new SecureRandom();
+        keyGen.init(56, secureRandom);
         desSecretKey = keyGen.generateKey();
     }
 
     private static byte[] encryptAES(byte[] data) throws GeneralSecurityException {
-        return encrypt(data, aesSecretKey, "AES");
+        return encrypt(data, aesSecretKey, "AES/CBC/PKCS5Padding");
+    }
+
+    private static byte[] decryptAES(byte[] data) throws GeneralSecurityException {
+        return decrypt(data, aesSecretKey, "AES/CBC/PKCS5Padding");
     }
 
     private static byte[] encryptDES(byte[] data) throws GeneralSecurityException {
-        return encrypt(data, desSecretKey, "DES");
+        return encrypt(data, desSecretKey, "DES/CBC/PKCS5Padding");
     }
 
-    private static byte[] decryptAES(byte[] encryptedData) throws GeneralSecurityException {
-        return decrypt(encryptedData, aesSecretKey, "AES");
-    }
-
-    private static byte[] decryptDES(byte[] encryptedData) throws GeneralSecurityException {
-        return decrypt(encryptedData, desSecretKey, "DES");
+    private static byte[] decryptDES(byte[] data) throws GeneralSecurityException {
+        return decrypt(data, desSecretKey, "DES/CBC/PKCS5Padding");
     }
 
     private static byte[] encrypt(byte[] data, SecretKey key, String algorithm) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(algorithm);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        return cipher.doFinal(data);
+
+        // Generate Initialization Vector (IV)
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] iv = new byte[cipher.getBlockSize()];
+        secureRandom.nextBytes(iv);
+        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+        cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+
+        // Combine IV and encrypted data
+        byte[] encryptedData = cipher.doFinal(data);
+        byte[] result = new byte[iv.length + encryptedData.length];
+        System.arraycopy(iv, 0, result, 0, iv.length);
+        System.arraycopy(encryptedData, 0, result, iv.length, encryptedData.length);
+
+        return result;
     }
 
-    private static byte[] decrypt(byte[] encryptedData, SecretKey key, String algorithm) throws GeneralSecurityException {
+    private static byte[] decrypt(byte[] data, SecretKey key, String algorithm) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(algorithm);
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        return cipher.doFinal(encryptedData);
+
+        // Extract Initialization Vector (IV) from the encrypted data
+        IvParameterSpec ivSpec = new IvParameterSpec(Arrays.copyOfRange(data, 0, cipher.getBlockSize()));
+
+        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+        return cipher.doFinal(Arrays.copyOfRange(data, cipher.getBlockSize(), data.length));
     }
 
-    private static void uploadFileToServer(String filePath, byte[] encryptedData) {
+
+    private static void handleFileUpload(String filePath, byte[] encryptedData) {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/filedatabase", "root", "");
-            String insertSql = "INSERT INTO encrypted_files (file_name, encrypted_data) VALUES (?, ?)";
-            PreparedStatement insertStatement = connection.prepareStatement(insertSql);
-            insertStatement.setString(1, Paths.get(filePath).getFileName().toString());
-            insertStatement.setBytes(2, encryptedData);
-            insertStatement.executeUpdate();
-            insertStatement.close();
-            connection.close();
-        } catch (SQLException ex) {
+            // Set up Google Cloud Storage client
+            Storage storage = StorageOptions.newBuilder()
+                    .setCredentials(GoogleCredentials.fromStream(new FileInputStream("src/main/java/com/securefile/Main.java/credentials.json")))
+                    .setProjectId("your_project_id")
+                    .build()
+                    .getService();
+
+            // Generate a unique object name (you may customize this)
+            String objectName = "encrypted_files/" + System.currentTimeMillis() + "_"
+                    + Paths.get(filePath).getFileName();
+
+            // Upload the encrypted file to Google Cloud Storage
+            BlobId blobId = BlobId.of(BUCKET_NAME, objectName);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+            storage.create(blobInfo, encryptedData);
+
+            // Display success message or perform additional actions
+            uploadLabel.setText("File Encrypted and Uploaded to Cloud: " + objectName);
+        } catch (IOException | StorageException ex) {
             ex.printStackTrace();
+            uploadLabel.setText("Error during file upload to Cloud Storage.");
         }
     }
 
-    private static byte[] downloadFileFromServer() {
+    private static void encryptAndUploadFile(String filePath) {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/filedatabase", "root", "");
-            String sql = "SELECT * FROM encrypted_files";
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-            if (resultSet.next()) {
-                return resultSet.getBytes("encrypted_data");
-            }
-            resultSet.close();
-            statement.close();
-            connection.close();
-        } catch (SQLException ex) {
+            File selectedFile = new File(filePath);
+            byte[] fileData = Files.readAllBytes(selectedFile.toPath());
+
+            // Generate AES key
+            generateAESKey();
+
+            // Encrypt the file data
+            byte[] encryptedData = encryptAES(fileData);
+
+            // Upload the encrypted file to Google Cloud Storage
+            handleFileUpload(filePath, encryptedData);
+        } catch (IOException | GeneralSecurityException ex) {
             ex.printStackTrace();
+            uploadLabel.setText("Error during encryption and file upload to Cloud Storage.");
         }
-        return null;
     }
+
 }
