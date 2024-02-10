@@ -92,5 +92,5 @@ javac *.java
 ```
 
 ```java
-java Main
+java Main.java
 ```
