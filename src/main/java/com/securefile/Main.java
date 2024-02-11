@@ -35,9 +35,14 @@ public class Main {
     private static JPasswordField regPasswordField;
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
+    // Add database connection details
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/filedatabase";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "";
 
     private static SecretKey aesSecretKey;
     private static SecretKey desSecretKey;
+    private static final String USER_TABLE = "users";
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Main::createAndShowLoginGUI);
@@ -174,8 +179,18 @@ public class Main {
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: Add your login logic here
-                handleLogin();
+                String username = usernameField.getText();
+                char[] passwordChars = passwordField.getPassword();
+                String password = new String(passwordChars);
+
+                if (authenticateUser(username, password)) {
+                    // Login successful, show file upload frame
+                    fileUploadFrame.setVisible(true);
+                    loginFrame.setVisible(false);
+                } else {
+                    JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -190,8 +205,20 @@ public class Main {
         regRegisterButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: Add your registration logic here
-                handleRegistration();
+                String fullName = regFullNameField.getText();
+                String username = regUsernameField.getText();
+                char[] passwordChars = regPasswordField.getPassword();
+                String password = new String(passwordChars);
+
+                if (registerUser(fullName, username, password)) {
+                    JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    registrationFrame.setVisible(false);
+                    loginFrame.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(registrationFrame, "Registration failed", "Registration Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -260,7 +287,8 @@ public class Main {
                         // Split the combined encrypted data into AES and DES encrypted data
                         int halfLength = combinedEncryptedData.length / 2;
                         byte[] encryptedDataAES = Arrays.copyOfRange(combinedEncryptedData, 0, halfLength);
-                        byte[] encryptedDataDES = Arrays.copyOfRange(combinedEncryptedData, halfLength, combinedEncryptedData.length);
+                        byte[] encryptedDataDES = Arrays.copyOfRange(combinedEncryptedData, halfLength,
+                                combinedEncryptedData.length);
 
                         // Decrypt the AES encrypted data
                         byte[] decryptedDataAES = decryptAES(encryptedDataAES);
@@ -310,20 +338,49 @@ public class Main {
         // Display the login frame
         loginFrame.setVisible(true);
     }
-
-    private static void handleLogin() {
-        // TODO: Add your login validation logic here
-        // For now, just switch to file upload frame
-        fileUploadFrame.setVisible(true);
-        loginFrame.setVisible(false);
+// User login authentication code
+    private static boolean authenticateUser(String username, String password) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection
+                        .prepareStatement("SELECT * FROM " + USER_TABLE + " WHERE username = ? AND password = ?")) {
+            statement.setString(1, username);
+            statement.setString(2, password);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next(); // If a row is found, authentication succeeds
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
     }
-
-    private static void handleRegistration() {
-        // TODO: Add your registration logic here
-        // For now, just switch to file upload frame
-        fileUploadFrame.setVisible(true);
-        registrationFrame.setVisible(false);
+// User Registeration code
+    private static boolean registerUser(String fullName, String username, String password) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO " + USER_TABLE + " (full_name, username, password) VALUES (?, ?, ?)")) {
+            statement.setString(1, fullName);
+            statement.setString(2, username);
+            statement.setString(3, password);
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0; // If at least one row is affected, registration succeeds
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
     }
+    // private static void handleLogin() {
+    // // TODO: Add your login validation logic here
+    // // For now, just switch to file upload frame
+    // fileUploadFrame.setVisible(true);
+    // loginFrame.setVisible(false);
+    // }
+
+    // private static void handleRegistration() {
+    // // TODO: Add your registration logic here
+    // // For now, just switch to file upload frame
+    // fileUploadFrame.setVisible(true);
+    // registrationFrame.setVisible(false);
+    // }
 
     private static void generateAESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
@@ -359,7 +416,8 @@ public class Main {
         return cipher.doFinal(data);
     }
 
-    private static byte[] decrypt(byte[] encryptedData, SecretKey key, String algorithm) throws GeneralSecurityException {
+    private static byte[] decrypt(byte[] encryptedData, SecretKey key, String algorithm)
+            throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(algorithm);
         cipher.init(Cipher.DECRYPT_MODE, key);
         return cipher.doFinal(encryptedData);

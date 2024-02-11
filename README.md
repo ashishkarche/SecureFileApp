@@ -73,6 +73,15 @@ file_id INT AUTO_INCREMENT PRIMARY KEY,
 file_name VARCHAR(255) NOT NULL,
 encrypted_data LONGBLOB NOT NULL
 );
+
+-- Create a table to store user username & password.
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(50) NOT NULL
+);
 ```
 
 ##### Step 4 -
@@ -82,6 +91,17 @@ Tutorial for importing sql database to xampp server -[Click to see video ! ](htt
 ##### Step 5 -
 
 Run this command
+
+`Default Loginusername & password` - 
+
+###### username -
+```python
+ ashish
+```
+###### password
+```python
+ 12345678
+```
 
 ```java
 cd src\main\java\com\securefile
@@ -94,3 +114,4 @@ javac *.java
 ```java
 java Main
 ```
+
