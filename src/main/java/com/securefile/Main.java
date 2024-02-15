@@ -25,7 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class Main {
-
+    // Gui Variable
     private static JFrame loginFrame;
     private static JTextField usernameField;
     private static JPasswordField passwordField;
@@ -35,7 +35,7 @@ public class Main {
     private static JPasswordField regPasswordField;
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
-    // Add database connection details
+    // Add database connection Variable
     private static final String DB_URL = "jdbc:mysql://localhost:3306/filedatabase";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
@@ -146,10 +146,11 @@ public class Main {
         JLabel plusSignLabel = new JLabel(new ImageIcon("src/main/resources/plus.png")); // Replace "plus.png" with
         // your plus sign image
         // file
-        uploadLabel = new JLabel("Upload File");
+        uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        JButton encryptButton = new JButton("Encrypt");
-        JButton decryptButton = new JButton("Decrypt");
+        JButton encryptButton = new JButton("Upload file");
+        JButton decryptButton = new JButton("Download");
+        JButton logoutButton = new JButton("Logout"); // Adding a logout button
 
         c.insets = new Insets(10, 10, 10, 10);
         c.gridwidth = 2;
@@ -171,10 +172,16 @@ public class Main {
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(decryptButton, c);
 
+        c.gridy = 4;
+        c.anchor = GridBagConstraints.CENTER;
+        fileUploadFrame.add(logoutButton, c); // Adding logout button to the frame
+
         // Initially, hide the frames
         registrationFrame.setVisible(false);
         fileUploadFrame.setVisible(false);
-        /* Backend Code */
+
+        /***** Backend Code *******/
+
         // Action listeners
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -191,6 +198,18 @@ public class Main {
                     JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
                             JOptionPane.ERROR_MESSAGE);
                 }
+            }
+        });
+
+        // ActionListener for logout button
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Close file upload frame
+                fileUploadFrame.dispose();
+
+                // Show login frame
+                loginFrame.setVisible(true);
             }
         });
 
@@ -265,7 +284,7 @@ public class Main {
                         // Upload the file and encrypted data to the server
                         uploadFileToServer(filePath, combinedEncryptedData);
 
-                        uploadLabel.setText("File Encrypted (AES & DES) and Uploaded to Server");
+                        uploadLabel.setText("File Encrypted and Uploaded to Server");
                     } catch (IOException | GeneralSecurityException ex) {
                         ex.printStackTrace();
                         uploadLabel.setText("Error during encryption.");
@@ -327,7 +346,7 @@ public class Main {
                     String filePath = selectedFile.getAbsolutePath();
 
                     // Update the uploadLabel
-                    uploadLabel.setText("File Uploaded: " + selectedFile.getName());
+                    uploadLabel.setText("File Selected: " + selectedFile.getName());
 
                     // Set the file path in the plusSignLabel's client property
                     plusSignLabel.putClientProperty("filePath", filePath);
@@ -338,7 +357,8 @@ public class Main {
         // Display the login frame
         loginFrame.setVisible(true);
     }
-// User login authentication code
+
+    // User login authentication code
     private static boolean authenticateUser(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection
@@ -353,7 +373,8 @@ public class Main {
             return false;
         }
     }
-// User Registeration code
+
+    // User Registeration code
     private static boolean registerUser(String fullName, String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
@@ -368,19 +389,6 @@ public class Main {
             return false;
         }
     }
-    // private static void handleLogin() {
-    // // TODO: Add your login validation logic here
-    // // For now, just switch to file upload frame
-    // fileUploadFrame.setVisible(true);
-    // loginFrame.setVisible(false);
-    // }
-
-    // private static void handleRegistration() {
-    // // TODO: Add your registration logic here
-    // // For now, just switch to file upload frame
-    // fileUploadFrame.setVisible(true);
-    // registrationFrame.setVisible(false);
-    // }
 
     private static void generateAESKey() throws NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
