@@ -143,9 +143,7 @@ public class Main {
         fileUploadFrame.setSize(500, 500);
         fileUploadFrame.setLayout(new GridBagLayout());
 
-        JLabel plusSignLabel = new JLabel(new ImageIcon("src/main/resources/plus.png")); // Replace "plus.png" with
-        // your plus sign image
-        // file
+        JLabel plusSignLabel = new JLabel(new ImageIcon("src/main/resources/plus.png")); // Replace "plus.png" with your plus sign image file
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
