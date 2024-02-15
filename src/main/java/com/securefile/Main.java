@@ -152,30 +152,33 @@ public class Main {
         JButton decryptButton = new JButton("Download");
         JButton logoutButton = new JButton("Logout"); // Adding a logout button
 
-        c.insets = new Insets(10, 10, 10, 10);
+        c.insets = new Insets(10, 10, 20, 10);
         c.gridwidth = 2;
         c.gridx = 0;
         c.gridy = 0;
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(plusSignLabel, c);
-
+        
         c.gridy = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(uploadLabel, c);
-
+        
         c.gridy = 2;
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(encryptButton, c);
-
+        
         c.gridy = 3;
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(decryptButton, c);
-
-        c.gridy = 4;
-        c.anchor = GridBagConstraints.CENTER;
+        
+        c.insets = new Insets(10, 10, 10, 10);
+        c.gridwidth = 1;
+        c.gridx = 4; 
+        c.gridy = 0; 
+        c.anchor = GridBagConstraints.NORTHWEST; 
         fileUploadFrame.add(logoutButton, c); // Adding logout button to the frame
-
+    
         // Initially, hide the frames
         registrationFrame.setVisible(false);
         fileUploadFrame.setVisible(false);
