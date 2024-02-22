@@ -7,7 +7,15 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+// import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.AbstractTableModel;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import java.security.GeneralSecurityException;
 
 public class GUI {
@@ -119,8 +127,6 @@ public class GUI {
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
-        JButton decryptButton = new JButton("Download");
-        JButton logoutButton = new JButton("Logout");
 
         c.insets = new Insets(10, 10, 20, 10);
         c.gridwidth = 2;
@@ -138,22 +144,10 @@ public class GUI {
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(encryptButton, c);
 
-        c.gridy = 3;
-        c.anchor = GridBagConstraints.CENTER;
-        fileUploadFrame.add(decryptButton, c);
-
-        c.insets = new Insets(10, 10, 10, 10);
-        c.gridwidth = 1;
-        c.gridx = 4;
-        c.gridy = 0;
-        c.anchor = GridBagConstraints.NORTHWEST;
-        fileUploadFrame.add(logoutButton, c);
-
         // Initially, hide the frames
         registrationFrame.setVisible(false);
         fileUploadFrame.setVisible(false);
 
-        /***** Backend Code *******/
         Backend.initializeEncryptionKeys();
 
         // Action listeners
@@ -165,25 +159,13 @@ public class GUI {
                 String password = new String(passwordChars);
 
                 if (Backend.authenticateUser(username, password)) {
-                    // Login successful, show file upload frame
-                    fileUploadFrame.setVisible(true);
+                    // Login successful, show dashboard
+                    createAndShowDashboardGUI(username);
                     loginFrame.setVisible(false);
                 } else {
                     JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
                             JOptionPane.ERROR_MESSAGE);
                 }
-            }
-        });
-
-        // ActionListener for logout button
-        logoutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Close file upload frame
-                fileUploadFrame.dispose();
-
-                // Show login frame
-                loginFrame.setVisible(true);
             }
         });
 
@@ -230,56 +212,45 @@ public class GUI {
 
                 if (filePath != null && !filePath.isEmpty()) {
                     try {
+                        // Check if the file already exists on the server
+                        boolean fileExists = Backend.doesFileExist(Paths.get(filePath).getFileName().toString());
+
+                        if (fileExists) {
+                            JOptionPane.showMessageDialog(fileUploadFrame, "File already exists on the server",
+                                    "File Exists", JOptionPane.WARNING_MESSAGE);
+                            return; // Exit the method without further processing
+                        }
+
                         File selectedFile = new File(filePath);
                         byte[] fileData = Files.readAllBytes(selectedFile.toPath());
 
-                        // Encrypt the file data and upload to server
-                        byte[] encryptedData = Backend.encryptFileData(fileData);
-                        Backend.uploadFileToServer(filePath, encryptedData);
+                        // Encrypt the file data using AES and DES
+                        byte[] combinedEncryptedData = Backend.encryptFileData(fileData);
 
-                        uploadLabel.setText("File Encrypted and Uploaded to Server");
+                        // // Save the combined encrypted data to a new file
+                        // Path encryptedFilePath = Paths.get("encrypted_file.txt");
+                        // Files.write(encryptedFilePath, combinedEncryptedData,
+                        // StandardOpenOption.CREATE);
+
+                        // Upload the file and encrypted data to the server
+                        Backend.uploadFileToServer(filePath, combinedEncryptedData);
+
+                        // Show upload success message
+                        JOptionPane.showMessageDialog(fileUploadFrame, "File encrypted and uploaded successfully!",
+                                "Upload Successful", JOptionPane.INFORMATION_MESSAGE);
+
+                        // Close the file upload frame
+                        fileUploadFrame.dispose();
+
+                        // Show the dashboard
+                        createAndShowDashboardGUI(UserSession.getInstance().getUsername());
+
                     } catch (IOException | GeneralSecurityException ex) {
                         ex.printStackTrace();
                         uploadLabel.setText("Error during encryption.");
                     }
                 } else {
                     uploadLabel.setText("No file selected for encryption.");
-                }
-            }
-        });
-
-        decryptButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Download the encrypted file from the server
-                byte[] encryptedData = Backend.downloadFileFromServer();
-
-                if (encryptedData != null) {
-                    try {
-                        // Decrypt the encrypted data
-                        byte[] decryptedData = Backend.decryptFileData(encryptedData);
-
-                        // Choose a location to save the decrypted file
-                        JFileChooser fileChooser = new JFileChooser();
-                        fileChooser.setDialogTitle("Save Decrypted File");
-                        int userSelection = fileChooser.showSaveDialog(null);
-
-                        if (userSelection == JFileChooser.APPROVE_OPTION) {
-                            File decryptedFile = fileChooser.getSelectedFile();
-
-                            // Write the decrypted data to the selected file
-                            Files.write(decryptedFile.toPath(), decryptedData);
-
-                            uploadLabel.setText("File Decrypted and Saved: " + decryptedFile.getAbsolutePath());
-                        } else {
-                            uploadLabel.setText("Decryption canceled or file not saved.");
-                        }
-                    } catch (GeneralSecurityException | IOException ex) {
-                        ex.printStackTrace();
-                        uploadLabel.setText("Error during decryption or file saving.");
-                    }
-                } else {
-                    uploadLabel.setText("Error: Unable to download the encrypted file from the server.");
                 }
             }
         });
@@ -307,4 +278,183 @@ public class GUI {
         // Display the login frame
         loginFrame.setVisible(true);
     }
+
+    public static void createAndShowDashboardGUI(String username) {
+        JFrame dashboardFrame = new JFrame("Dashboard - " + username);
+        dashboardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        dashboardFrame.setSize(800, 600);
+
+        JPanel dashboardPanel = new JPanel(new BorderLayout());
+        dashboardFrame.add(dashboardPanel);
+
+        // Add the plus.png icon in the right-hand corner
+        ImageIcon plusIcon = new ImageIcon("src/main/resources/plus.png");
+        Image smallPlusImage = plusIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        ImageIcon smallPlusIcon = new ImageIcon(smallPlusImage);
+        JLabel plusLabel = new JLabel(smallPlusIcon);
+        plusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        dashboardPanel.add(plusLabel, BorderLayout.NORTH);
+
+        JTable fileTable = new JTable(new FileTableModel());
+        dashboardPanel.add(new JScrollPane(fileTable), BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        JButton shareButton = new JButton("Share");
+        buttonPanel.add(shareButton);
+
+        JButton downloadButton = new JButton("Download");
+        buttonPanel.add(downloadButton);
+
+        JButton deleteButton = new JButton("Delete");
+        buttonPanel.add(deleteButton);
+        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add logout button in the bottom right corner
+        JButton logoutButton = new JButton("Logout");
+        // JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(logoutButton);
+        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+
+        dashboardFrame.setVisible(true);
+
+        downloadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedRow = fileTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
+
+                    // Download the encrypted file from the server
+                    byte[] encryptedData = Backend.downloadEncryptedFileFromServer(fileName);
+
+                    if (encryptedData != null) {
+                        try {
+                            // Decrypt the encrypted data
+                            byte[] decryptedData = Backend.decryptFileData(encryptedData);
+
+                            // Choose a location to save the decrypted file
+                            JFileChooser fileChooser = new JFileChooser();
+                            fileChooser.setDialogTitle("Save Decrypted File");
+                            int userSelection = fileChooser.showSaveDialog(null);
+
+                            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                                File decryptedFile = fileChooser.getSelectedFile();
+
+                                // Write the decrypted data to the selected file
+                                Files.write(decryptedFile.toPath(), decryptedData);
+
+                                JOptionPane.showMessageDialog(dashboardFrame,
+                                        "File Decrypted and Saved: " + decryptedFile.getAbsolutePath(),
+                                        "Download Successful", JOptionPane.INFORMATION_MESSAGE);
+                            } else {
+                                JOptionPane.showMessageDialog(dashboardFrame, "Download canceled or file not saved.",
+                                        "Download Canceled", JOptionPane.WARNING_MESSAGE);
+                            }
+                        } catch (GeneralSecurityException | IOException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(dashboardFrame,
+                                    "Error during decryption or file saving.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(dashboardFrame, "Error: Unable to download the encrypted file.",
+                                "Download Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to download.",
+                            "No File Selected",
+                            JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        plusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                fileUploadFrame.setVisible(true);
+            }
+        });
+
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Logout the user
+                UserSession.getInstance().logoutUser();
+
+                // Close file upload frame
+                dashboardFrame.dispose();
+
+                // Show login frame
+                loginFrame.setVisible(true);
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedRow = fileTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
+                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
+                    boolean deleted = Backend.deleteFileFromServer(fileId, fileName);
+                    if (deleted) {
+                        // Refresh the table
+                        ((FileTableModel) fileTable.getModel()).refreshData();
+                        JOptionPane.showMessageDialog(dashboardFrame, "File deleted successfully.");
+                    } else {
+                        JOptionPane.showMessageDialog(dashboardFrame, "Error deleting file.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to delete.", "Warning", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+    }
+
+    private static class FileTableModel extends AbstractTableModel {
+        private String[] columnNames = {"File ID", "File Name"};
+        private List<Object[]> data;
+
+        public FileTableModel() {
+            this.data = fetchData();
+        }
+
+        private List<Object[]> fetchData() {
+            Object[][] fetchedData = Backend.fetchFileData();
+            List<Object[]> dataList = new ArrayList<>();
+            for (Object[] row : fetchedData) {
+                dataList.add(row);
+            }
+            return dataList;
+        }
+
+        public void refreshData() {
+            this.data = fetchData();
+            fireTableDataChanged();
+        }
+
+        @Override
+        public int getRowCount() {
+            return data.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return data.get(rowIndex)[columnIndex];
+        }
+    }
+
+
 }
