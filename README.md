@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 ##### Step 4 -
 
-Tutorial for importing sql database to xampp server -[Click to see video ! ](https://youtu.be/ug-bj93_S_M?si=t2negUBl3czTE0Ah)
+Tutorial for importing sql database to xampp server -[Click to see video ! ](https://youtu.be/2ynKAAt1G4Y?si=kOkDHDXhBy8_zw0Q)
 
 ##### Step 5 -
 
