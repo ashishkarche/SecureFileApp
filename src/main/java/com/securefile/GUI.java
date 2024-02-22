@@ -1,3 +1,7 @@
+/**
+ * The `GUI` class in the `com.securefile` package contains methods to create and display graphical
+ * user interfaces for login, registration, dashboard, and file upload functionalities.
+ */
 package com.securefile;
 
 import javax.swing.*;

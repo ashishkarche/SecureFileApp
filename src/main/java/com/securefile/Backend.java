@@ -1,3 +1,8 @@
+/**
+ * The `Backend` class in the `com.securefile` package provides functionality for user authentication,
+ * file encryption/decryption, database operations, and file management in a secure file storage
+ * application.
+ */
 package com.securefile;
 
 import java.io.ByteArrayOutputStream;

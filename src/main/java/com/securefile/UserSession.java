@@ -1,3 +1,7 @@
+/**
+ * The `UserSession` class manages user login sessions by storing user information and providing
+ * methods to login, logout, and check login status.
+ */
 package com.securefile;
 
 public class UserSession {
