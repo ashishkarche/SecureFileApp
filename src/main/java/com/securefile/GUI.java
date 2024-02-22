@@ -377,6 +377,7 @@ public class GUI {
         plusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 fileUploadFrame.setVisible(true);
+                dashboardFrame.setVisible(false);
             }
         });
 
