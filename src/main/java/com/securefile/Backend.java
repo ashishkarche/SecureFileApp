@@ -122,11 +122,11 @@ public class Backend {
     }
 
     // User Registration code
-    public static boolean registerUser(String fullName, String username, String password) {
+    public static boolean registerUser(String email, String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "INSERT INTO " + USER_TABLE + " (full_name, username, password) VALUES (?, ?, ?)")) {
-            statement.setString(1, fullName);
+                        "INSERT INTO " + USER_TABLE + " (email, username, password) VALUES (?, ?, ?)")) {
+            statement.setString(1, email); // Add email to registration query
             statement.setString(2, username);
             statement.setString(3, hashPassword(password)); // Hashing the password
             int rowsAffected = statement.executeUpdate();
@@ -136,6 +136,7 @@ public class Backend {
             return false;
         }
     }
+
 
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {

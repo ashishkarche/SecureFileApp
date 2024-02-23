@@ -27,11 +27,12 @@ public class GUI {
     private static JTextField usernameField;
     private static JPasswordField passwordField;
     private static JFrame registrationFrame;
-    private static JTextField regFullNameField;
+    private static JTextField regEmailField;
     private static JTextField regUsernameField;
     private static JPasswordField regPasswordField;
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
+    private static JLabel passwordLengthLabel;
 
     public static void createAndShowLoginGUI() {
         // Create the main login frame
@@ -84,11 +85,13 @@ public class GUI {
 
         // Create registration components
         JLabel registerLabel = new JLabel("Register");
-        regFullNameField = new JTextField(20);
+        regEmailField = new JTextField(20);
         regUsernameField = new JTextField(20);
         regPasswordField = new JPasswordField(20);
         JButton regRegisterButton = new JButton("Register");
         JButton backButton = new JButton("Back to Login");
+
+        passwordLengthLabel = new JLabel();
 
         c.insets = new Insets(10, 10, 10, 10);
         c.gridwidth = 2;
@@ -100,7 +103,7 @@ public class GUI {
         c.gridwidth = 1;
         c.gridy = 1;
         c.anchor = GridBagConstraints.CENTER;
-        registrationFrame.add(new JLabel("Full Name:"), c);
+        registrationFrame.add(new JLabel("Email:"), c);
         c.gridy = 2;
         registrationFrame.add(new JLabel("Username:"), c);
         c.gridy = 3;
@@ -109,7 +112,7 @@ public class GUI {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridy = 1;
         c.gridx = 1;
-        registrationFrame.add(regFullNameField, c);
+        registrationFrame.add(regEmailField, c);
         c.gridy = 2;
         registrationFrame.add(regUsernameField, c);
         c.gridy = 3;
@@ -120,6 +123,8 @@ public class GUI {
         registrationFrame.add(regRegisterButton, c);
         c.gridy = 5;
         registrationFrame.add(backButton, c);
+        c.gridy = 6;
+        registrationFrame.add(passwordLengthLabel, c);
 
         // Create the file upload frame
         fileUploadFrame = new JFrame("File Upload");
@@ -184,12 +189,19 @@ public class GUI {
         regRegisterButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String fullName = regFullNameField.getText();
+                String email = regEmailField.getText(); // Retrieve email
                 String username = regUsernameField.getText();
                 char[] passwordChars = regPasswordField.getPassword();
                 String password = new String(passwordChars);
 
-                if (Backend.registerUser(fullName, username, password)) {
+                if (password.length() != 8) { // Check password length
+                    passwordLengthLabel.setText("Password should be 8 characters long");
+                    return;
+                } else {
+                    passwordLengthLabel.setText(""); // Clear password length message
+                }
+
+                if (Backend.registerUser(email, username, password)) { // Register user with email
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
                     registrationFrame.setVisible(false);
@@ -200,6 +212,7 @@ public class GUI {
                 }
             }
         });
+
 
         backButton.addActionListener(new ActionListener() {
             @Override
