@@ -230,14 +230,11 @@ public class GUI {
 
                         // Encrypt the file data using AES and DES
                         byte[] combinedEncryptedData = Backend.encryptFileData(fileData);
-
-                        // // Save the combined encrypted data to a new file
-                        // Path encryptedFilePath = Paths.get("encrypted_file.txt");
-                        // Files.write(encryptedFilePath, combinedEncryptedData,
-                        // StandardOpenOption.CREATE);
+                        // Get the current user ID from the session
+                        int userId = UserSession.getInstance().getUserId();
 
                         // Upload the file and encrypted data to the server
-                        Backend.uploadFileToServer(filePath, combinedEncryptedData);
+                        Backend.uploadFileToServer(filePath, combinedEncryptedData, userId);
 
                         // Show upload success message
                         JOptionPane.showMessageDialog(fileUploadFrame, "File encrypted and uploaded successfully!",
@@ -320,7 +317,6 @@ public class GUI {
         // JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(logoutButton);
         dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
 
         dashboardFrame.setVisible(true);
 
@@ -408,10 +404,12 @@ public class GUI {
                         ((FileTableModel) fileTable.getModel()).refreshData();
                         JOptionPane.showMessageDialog(dashboardFrame, "File deleted successfully.");
                     } else {
-                        JOptionPane.showMessageDialog(dashboardFrame, "Error deleting file.", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(dashboardFrame, "Error deleting file.", "Error",
+                                JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to delete.", "Warning", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to delete.", "Warning",
+                            JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -419,15 +417,17 @@ public class GUI {
     }
 
     private static class FileTableModel extends AbstractTableModel {
-        private String[] columnNames = {"File ID", "File Name"};
+        private String[] columnNames = { "File ID", "File Name" };
         private List<Object[]> data;
+        // Get the current user ID from the session
+        int userId = UserSession.getInstance().getUserId();
 
         public FileTableModel() {
             this.data = fetchData();
         }
 
         private List<Object[]> fetchData() {
-            Object[][] fetchedData = Backend.fetchFileData();
+            Object[][] fetchedData = Backend.fetchFileData(userId);
             List<Object[]> dataList = new ArrayList<>();
             for (Object[] row : fetchedData) {
                 dataList.add(row);
@@ -460,6 +460,5 @@ public class GUI {
             return data.get(rowIndex)[columnIndex];
         }
     }
-
 
 }

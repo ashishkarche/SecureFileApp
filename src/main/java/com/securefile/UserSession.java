@@ -6,7 +6,7 @@ package com.securefile;
 
 public class UserSession {
     private static UserSession instance;
-    
+
     private boolean isLoggedIn;
     private int userId;
     private String username;
@@ -26,6 +26,10 @@ public class UserSession {
         isLoggedIn = true;
         this.userId = userId;
         this.username = username;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public void logoutUser() {

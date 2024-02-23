@@ -16,7 +16,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -138,18 +137,20 @@ public class Backend {
         }
     }
 
-    public static void uploadFileToServer(String filePath, byte[] encryptedData) {
+    public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE + " (file_name, encrypted_data) VALUES (?, ?)";
+            String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE + " (file_name, encrypted_data, user_id) VALUES (?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
                 insertStatement.setString(1, Paths.get(filePath).getFileName().toString());
                 insertStatement.setBytes(2, encryptedData);
+                insertStatement.setInt(3, userId); // Include user ID
                 insertStatement.executeUpdate();
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
     }
+    
 
     public static byte[] downloadEncryptedFileFromServer(String fileName) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
@@ -201,29 +202,30 @@ public class Backend {
     }
 
     // Method to fetch file data from the server
-    public static Object[][] fetchFileData() {
+    public static Object[][] fetchFileData(int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT file_id, file_name FROM encrypted_files")) {
-
-            List<Object[]> dataList = new ArrayList<>();
-            while (resultSet.next()) {
-                int fileId = resultSet.getInt("file_id");
-                String fileName = resultSet.getString("file_name");
-                dataList.add(new Object[] { fileId, fileName });
+                PreparedStatement statement = connection.prepareStatement(
+                        "SELECT file_id, file_name FROM encrypted_files WHERE user_id = ?")) {
+            statement.setInt(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Object[]> dataList = new ArrayList<>();
+                while (resultSet.next()) {
+                    int fileId = resultSet.getInt("file_id");
+                    String fileName = resultSet.getString("file_name");
+                    dataList.add(new Object[] { fileId, fileName });
+                }
+                Object[][] fileData = new Object[dataList.size()][2];
+                for (int i = 0; i < dataList.size(); i++) {
+                    fileData[i] = dataList.get(i);
+                }
+                return fileData;
             }
-
-            Object[][] fileData = new Object[dataList.size()][2];
-            for (int i = 0; i < dataList.size(); i++) {
-                fileData[i] = dataList.get(i);
-            }
-            return fileData;
-
         } catch (SQLException e) {
             e.printStackTrace();
             return new Object[0][0]; // Return an empty array in case of an error
         }
     }
+    
     
     public static boolean deleteFileFromServer(int fileId, String fileName) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
