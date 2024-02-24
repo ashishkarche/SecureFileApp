@@ -430,7 +430,7 @@ public class GUI {
     }
 
     private static class FileTableModel extends AbstractTableModel {
-        private String[] columnNames = { "File ID", "File Name" };
+        private String[] columnNames = { "File No.", "File Name" };
         private List<Object[]> data;
         // Get the current user ID from the session
         int userId = UserSession.getInstance().getUserId();
