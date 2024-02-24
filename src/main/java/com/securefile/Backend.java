@@ -183,12 +183,13 @@ public class Backend {
         return Base64.getEncoder().encodeToString(hashedBytes);
     }
 
-    public static boolean doesFileExist(String fileName) {
+    public static boolean doesFileExist(String fileName, int userId) {
         boolean exists = false;
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String sql = "SELECT COUNT(*) AS count FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_name = ?";
+            String sql = "SELECT COUNT(*) AS count FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_name = ? AND user_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, fileName);
+                statement.setInt(2, userId);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     if (resultSet.next()) {
                         int count = resultSet.getInt("count");
@@ -201,6 +202,7 @@ public class Backend {
         }
         return exists;
     }
+    
 
     // Method to fetch file data from the server
     public static Object[][] fetchFileData(int userId) {

@@ -136,7 +136,7 @@ public class GUI {
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
-
+ 
         c.insets = new Insets(10, 10, 20, 10);
         c.gridwidth = 2;
         c.gridx = 0;
@@ -213,7 +213,6 @@ public class GUI {
             }
         });
 
-
         backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -226,14 +225,16 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String filePath = (String) plusSignLabel.getClientProperty("filePath");
+                // Get the currently logged-in user's ID
+                int userId = UserSession.getInstance().getUserId();
 
                 if (filePath != null && !filePath.isEmpty()) {
                     try {
                         // Check if the file already exists on the server
-                        boolean fileExists = Backend.doesFileExist(Paths.get(filePath).getFileName().toString());
+                        boolean fileExists = Backend.doesFileExist(Paths.get(filePath).getFileName().toString(),userId);
 
                         if (fileExists) {
-                            JOptionPane.showMessageDialog(fileUploadFrame, "File already exists on the server",
+                            JOptionPane.showMessageDialog(fileUploadFrame, "File already exists",
                                     "File Exists", JOptionPane.WARNING_MESSAGE);
                             return; // Exit the method without further processing
                         }
@@ -243,14 +244,12 @@ public class GUI {
 
                         // Encrypt the file data using AES and DES
                         byte[] combinedEncryptedData = Backend.encryptFileData(fileData);
-                        // Get the current user ID from the session
-                        int userId = UserSession.getInstance().getUserId();
 
                         // Upload the file and encrypted data to the server
                         Backend.uploadFileToServer(filePath, combinedEncryptedData, userId);
 
                         // Show upload success message
-                        JOptionPane.showMessageDialog(fileUploadFrame, "File encrypted and uploaded successfully!",
+                        JOptionPane.showMessageDialog(fileUploadFrame, "File uploaded successfully!",
                                 "Upload Successful", JOptionPane.INFORMATION_MESSAGE);
 
                         // Close the file upload frame
@@ -261,10 +260,10 @@ public class GUI {
 
                     } catch (IOException | GeneralSecurityException ex) {
                         ex.printStackTrace();
-                        uploadLabel.setText("Error during encryption.");
+                        uploadLabel.setText("Error during encryption or uploading file.");
                     }
                 } else {
-                    uploadLabel.setText("No file selected for encryption.");
+                    uploadLabel.setText("No file selected.");
                 }
             }
         });
@@ -303,7 +302,7 @@ public class GUI {
 
         // Add the plus.png icon in the right-hand corner
         ImageIcon plusIcon = new ImageIcon("src/main/resources/plus.png");
-        Image smallPlusImage = plusIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+        Image smallPlusImage = plusIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
         ImageIcon smallPlusIcon = new ImageIcon(smallPlusImage);
         JLabel plusLabel = new JLabel(smallPlusIcon);
         plusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -327,7 +326,6 @@ public class GUI {
 
         // Add logout button in the bottom right corner
         JButton logoutButton = new JButton("Logout");
-        // JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(logoutButton);
         dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -350,7 +348,7 @@ public class GUI {
 
                             // Choose a location to save the decrypted file
                             JFileChooser fileChooser = new JFileChooser();
-                            fileChooser.setDialogTitle("Save Decrypted File");
+                            fileChooser.setDialogTitle("Save File");
                             int userSelection = fileChooser.showSaveDialog(null);
 
                             if (userSelection == JFileChooser.APPROVE_OPTION) {
@@ -360,7 +358,7 @@ public class GUI {
                                 Files.write(decryptedFile.toPath(), decryptedData);
 
                                 JOptionPane.showMessageDialog(dashboardFrame,
-                                        "File Decrypted and Saved: " + decryptedFile.getAbsolutePath(),
+                                        "File Saved: " + decryptedFile.getAbsolutePath(),
                                         "Download Successful", JOptionPane.INFORMATION_MESSAGE);
                             } else {
                                 JOptionPane.showMessageDialog(dashboardFrame, "Download canceled or file not saved.",
@@ -395,6 +393,8 @@ public class GUI {
             public void actionPerformed(ActionEvent e) {
                 // Logout the user
                 UserSession.getInstance().logoutUser();
+
+                clearLoginFields();
 
                 // Close file upload frame
                 dashboardFrame.dispose();
@@ -472,6 +472,11 @@ public class GUI {
         public Object getValueAt(int rowIndex, int columnIndex) {
             return data.get(rowIndex)[columnIndex];
         }
+    }
+
+    private static void clearLoginFields() {
+        usernameField.setText("");
+        passwordField.setText("");
     }
 
 }
