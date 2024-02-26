@@ -1,6 +1,6 @@
 # Secure File Storage on Cloud using hybrid cryptography & multiparty Method
 
-1. `Algorithm encryption/Decryption` - AES, DES, RC6, SHA5
+1. `encryption/Decryption Algorithm ` - AES, DES, RC6, SHA5
    [Click to see explanation..](https://chat.openai.com/share/d4c200ff-e7d9-451e-aa48-9c005a703ec9)
 
 2. `Multiparty Method` -
@@ -9,11 +9,11 @@
 
 Encrypted data can be stored safely or transferred to a third party for analysis. Depending on the type of homomorphic encryption, certain processes are possible.
 
-##### `Partial homomorphic encryption`: This method of encryption can perform one type of operation on encrypted data. For example, this type of encryption would allow data to be either added or multiplied, not both. The obvious drawback is that only one type of operation is possible.
+##### `a. Partial homomorphic encryption`: This method of encryption can perform one type of operation on encrypted data. For example, this type of encryption would allow data to be either added or multiplied, not both. The obvious drawback is that only one type of operation is possible.
 
-##### `Somewhat homomorphic encryption`: This method of encryption can perform more than one type of operation. Data encrypted this way could be added and multiplied, but there is a limit to the number of operations that can be accomplished.
+##### `b. Somewhat homomorphic encryption`: This method of encryption can perform more than one type of operation. Data encrypted this way could be added and multiplied, but there is a limit to the number of operations that can be accomplished.
 
-##### `Fully homomorphic encryption`: With this method of encryption, more than one type of secure computation can be performed. Additionally, there is no limit to the number of operations that can be performed.
+##### `c. Fully homomorphic encryption`: With this method of encryption, more than one type of secure computation can be performed. Additionally, there is no limit to the number of operations that can be performed.
 
 
 3. `Code Language & server` - Java & Xampp Server
