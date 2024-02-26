@@ -1,7 +1,7 @@
 # Secure File Storage on Cloud using hybrid cryptography & multiparty Method
 
 1. `Algorithm encryption/Decryption` - AES, DES, RC6, SHA5
-   [Algorrithm Explanation](https://chat.openai.com/share/d4c200ff-e7d9-451e-aa48-9c005a703ec9)
+   [Click to see explanation..](https://chat.openai.com/share/d4c200ff-e7d9-451e-aa48-9c005a703ec9)
 
 2. `Multiparty Method` -
 
@@ -15,12 +15,6 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
 ##### `Fully homomorphic encryption`: With this method of encryption, more than one type of secure computation can be performed. Additionally, there is no limit to the number of operations that can be performed.
 
-#### An Example Of Multiparty Encryption
-
-![Example](src/main/resources/image/1.png)
-![Example](src/main/resources/image/2.png)
-![Example](src/main/resources/image/3.png)
-
 
 3. `Code Language & server` - Java & Xampp Server
 
@@ -32,7 +26,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
    ##### Step 2 -
 
-   add Google Cloud dependencies in your pom.xml & sync pom.xml (if dependencies already sync then no need to do step 1 , you can direcly go on step-2)
+   add MySql drive dependencies in your `pom.xml` & sync `pom.xml` (if dependencies already sync then no need to do `step 2` , we can direcly go on `step-3`).
 
    ```xml
    <dependencies>
@@ -42,66 +36,20 @@ Encrypted data can be stored safely or transferred to a third party for analysis
       <artifactId>mysql-connector-java</artifactId>
       <version>8.0.33</version>
     </dependency>
-   ```
-
-  </dependencies>
+   </dependencies>
    ```
 
 ##### Step 3 -
 
-Create sql data base by name `filedatabase` (if database is alreay created then no need to create database) 
-or
-just import created database to xampp server, link is given in `step 4`.
-
-```sql
--- Create the database
-CREATE DATABASE filedatabase;
-
--- Use the newly created database
-USE filedatabase;
-
--- Create a table to store uploaded files
-CREATE TABLE uploaded_files (
-file_id INT AUTO_INCREMENT PRIMARY KEY,
-file_name VARCHAR(255) NOT NULL,
-file_data LONGBLOB NOT NULL
-);
-
--- Create a table to store encrypted files
-CREATE TABLE encrypted_files (
-file_id INT AUTO_INCREMENT PRIMARY KEY,
-file_name VARCHAR(255) NOT NULL,
-encrypted_data LONGBLOB NOT NULL
-);
-
--- Create a table to store user username & password.
-
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(50) NOT NULL
-);
-```
+just import downloaded database to xampp server, link is given ![Download Database](./filedatabase.sql).
 
 ##### Step 4 -
 
-Tutorial for importing sql database to xampp server -[Click to see video ! ](https://youtu.be/2ynKAAt1G4Y?si=kOkDHDXhBy8_zw0Q)
+Tutorial for importing sql database to xampp server -[Click to see video..! ](https://youtu.be/2ynKAAt1G4Y?si=kOkDHDXhBy8_zw0Q)
 
 ##### Step 5 -
 
 Run this command
-
-`Default Loginusername & password` - 
-
-###### username -
-```python
- ashish
-```
-###### password
-```python
- 12345678
-```
 
 ```java
 cd src\main\java\com\securefile
@@ -114,4 +62,3 @@ javac *.java
 ```java
 java Main.java
 ```
-
