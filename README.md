@@ -15,7 +15,6 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
 ##### `c. Fully homomorphic encryption`: With this method of encryption, more than one type of secure computation can be performed. Additionally, there is no limit to the number of operations that can be performed.
 
-
 3. `Code Language & server` - Java & Xampp Server
 
 4. `How To Run This Code` -
@@ -26,7 +25,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
    ##### Step 2 -
 
-   add MySql drive dependencies in your `pom.xml` & sync `pom.xml` (if dependencies already sync then no need to do `step 2` , we can direcly go on `step-3`).
+   add MySql drive & smpt protocol dependencies in your `pom.xml` & sync `pom.xml` (if dependencies already sync then no need to do `step 2` , we can direcly go on `step-3`).
 
    ```xml
    <dependencies>
@@ -36,6 +35,13 @@ Encrypted data can be stored safely or transferred to a third party for analysis
       <artifactId>mysql-connector-java</artifactId>
       <version>8.0.33</version>
     </dependency>
+
+    <dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+   </dependency>
+
    </dependencies>
    ```
 

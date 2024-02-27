@@ -10,6 +10,7 @@ public class UserSession {
     private boolean isLoggedIn;
     private int userId;
     private String username;
+    private String email;
 
     private UserSession() {
         isLoggedIn = false;
@@ -22,10 +23,11 @@ public class UserSession {
         return instance;
     }
 
-    public void loginUser(int userId, String username) {
+    public void loginUser(int userId, String username, String email) {
         isLoggedIn = true;
         this.userId = userId;
         this.username = username;
+        this.email = email;
     }
 
     public void setUserId(int userId) {
@@ -36,6 +38,7 @@ public class UserSession {
         isLoggedIn = false;
         userId = 0;
         username = null;
+        email = null;
     }
 
     public boolean isLoggedIn() {
@@ -48,5 +51,9 @@ public class UserSession {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getEmail() {
+        return email;
     }
 }

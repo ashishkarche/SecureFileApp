@@ -384,6 +384,44 @@ public class GUI {
             }
         });
 
+        // Inside the createAndShowDashboardGUI method, add the following ActionListener
+        // for the shareButton:
+        shareButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Get the selected row in the table
+                int selectedRow = fileTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    // Retrieve the file name from the selected row
+                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
+
+                    // Prompt the user to enter the receiver's email address
+                    String receiverEmail = JOptionPane.showInputDialog(dashboardFrame, "Enter receiver's email:");
+
+                    if (receiverEmail != null && !receiverEmail.isEmpty()) {
+                        // Generate the download link for the file
+                        String downloadLink = Backend.generateDownloadLink(fileName);
+
+                        // Send an email to the receiver with the download link
+                        Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),
+                                "Download file from: " + downloadLink);
+
+                        // Show a confirmation message to the user
+                        JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,
+                                "Email Sent", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        // If the user cancels or leaves the email field empty
+                        JOptionPane.showMessageDialog(dashboardFrame, "Receiver's email is required",
+                                "Email Required", JOptionPane.WARNING_MESSAGE);
+                    }
+                } else {
+                    // If no file is selected
+                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to share.",
+                            "No File Selected", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
         plusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 fileUploadFrame.setVisible(true);

@@ -28,6 +28,15 @@ import javax.crypto.SecretKey;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.List;
+import java.util.Properties;
+
+import javax.mail.*;
+import javax.mail.MessagingException;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+
 
 public class Backend {
     // Database Connection Constants
@@ -161,14 +170,15 @@ public class Backend {
     public static boolean authenticateUser(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT id, username, password FROM " + USER_TABLE + " WHERE username = ?")) {
+                        "SELECT id, username, email, password FROM " + USER_TABLE + " WHERE username = ?")) {
             statement.setString(1, username);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     int userId = resultSet.getInt("id");
+                    String userEmail = resultSet.getString("email"); // Retrieve user's email
                     String hashedPassword = resultSet.getString("password");
                     if (verifyPassword(password, hashedPassword)) {
-                        userSession.loginUser(userId, username);
+                        userSession.loginUser(userId, username, userEmail); // Store user's email in the session
                         return true;
                     }
                 }
@@ -212,7 +222,8 @@ public class Backend {
 
     public static byte[] downloadEncryptedFileFromServer(int fileId, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement("SELECT encrypted_data FROM encrypted_files WHERE file_id = ? AND user_id = ?")) {
+                PreparedStatement statement = connection.prepareStatement(
+                        "SELECT encrypted_data FROM encrypted_files WHERE file_id = ? AND user_id = ?")) {
             statement.setInt(1, fileId);
             statement.setInt(2, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -225,7 +236,6 @@ public class Backend {
         }
         return null;
     }
-    
 
     private static boolean verifyPassword(String password, String hashedPassword) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -297,6 +307,61 @@ public class Backend {
         } catch (SQLException ex) {
             ex.printStackTrace();
             return false;
+        }
+    }
+
+    // Retrieve sender's email from the user session
+    public static String getSenderEmail() {
+        return userSession.getEmail();
+    }
+
+    public static String generateDownloadLink(String fileName) {
+        // Generate a unique download link for the file
+        // You can use a random token or timestamp to make the link unique
+        // For example:
+        // String downloadLink = "http://example.com/download?file=" + fileName +
+        // "&token=" + generateRandomToken();
+        return "http://example.com/download?file=" + fileName; // Example download link
+    }
+
+    public static void sendEmail(String receiverEmail, String senderEmail, String message) {
+        // Email configuration properties
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", "your_smtp_host"); // Replace with your SMTP host
+        properties.put("mail.smtp.port", "your_smtp_port"); // Replace with your SMTP port
+        properties.put("mail.smtp.auth", "true"); // Enable authentication
+        properties.put("mail.smtp.starttls.enable", "true"); // Enable TLS encryption
+
+        // Sender's credentials
+        String username = "your_email@example.com"; // Replace with your email address
+        String password = "your_email_password"; // Replace with your email password
+
+        // Create a session with authentication
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
+
+        try {
+            // Create a MimeMessage object
+            Message mimeMessage = new MimeMessage(session);
+            mimeMessage.setFrom(new InternetAddress(senderEmail)); // Set the sender's email address
+            mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(receiverEmail)); // Set the
+                                                                                                    // recipient's email
+                                                                                                    // address
+            mimeMessage.setSubject("File sharing"); // Set the email subject
+            mimeMessage.setText(message); // Set the email message
+
+            // Send the email
+            Transport.send(mimeMessage);
+
+            System.out.println("Email sent to: " + receiverEmail);
+            System.out.println("Message: " + message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.err.println("Failed to send email.");
         }
     }
 }
