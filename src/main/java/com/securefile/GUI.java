@@ -136,7 +136,7 @@ public class GUI {
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
- 
+
         c.insets = new Insets(10, 10, 20, 10);
         c.gridwidth = 2;
         c.gridx = 0;
@@ -231,7 +231,8 @@ public class GUI {
                 if (filePath != null && !filePath.isEmpty()) {
                     try {
                         // Check if the file already exists on the server
-                        boolean fileExists = Backend.doesFileExist(Paths.get(filePath).getFileName().toString(),userId);
+                        boolean fileExists = Backend.doesFileExist(Paths.get(filePath).getFileName().toString(),
+                                userId);
 
                         if (fileExists) {
                             JOptionPane.showMessageDialog(fileUploadFrame, "File already exists",
@@ -336,10 +337,12 @@ public class GUI {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = fileTable.getSelectedRow();
                 if (selectedRow != -1) {
-                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
+                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
+                    // Get the user ID from the session
+                    int userId = UserSession.getInstance().getUserId();
 
                     // Download the encrypted file from the server
-                    byte[] encryptedData = Backend.downloadEncryptedFileFromServer(fileName);
+                    byte[] encryptedData = Backend.downloadEncryptedFileFromServer(fileId, userId);
 
                     if (encryptedData != null) {
                         try {
@@ -387,12 +390,12 @@ public class GUI {
                 dashboardFrame.setVisible(false);
             }
         });
-        
+
         // The window listener to the `fileUploadFrame` in Java Swing. When the
         // window is closing, it will make the `dashboardFrame` visible.
         fileUploadFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
-            public void windowClosing(java.awt.event.WindowEvent evt){
+            public void windowClosing(java.awt.event.WindowEvent evt) {
                 dashboardFrame.setVisible(true);
             }
         });

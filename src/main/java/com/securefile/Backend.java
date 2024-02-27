@@ -210,15 +210,14 @@ public class Backend {
         }
     }
 
-    public static byte[] downloadEncryptedFileFromServer(String fileName) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String sql = "SELECT encrypted_data FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_name = ?";
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, fileName);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        return resultSet.getBytes("encrypted_data");
-                    }
+    public static byte[] downloadEncryptedFileFromServer(int fileId, int userId) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement("SELECT encrypted_data FROM encrypted_files WHERE file_id = ? AND user_id = ?")) {
+            statement.setInt(1, fileId);
+            statement.setInt(2, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBytes("encrypted_data");
                 }
             }
         } catch (SQLException ex) {
@@ -226,6 +225,7 @@ public class Backend {
         }
         return null;
     }
+    
 
     private static boolean verifyPassword(String password, String hashedPassword) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
