@@ -33,6 +33,7 @@ public class GUI {
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
+    private static boolean fileUploadSuccess = false;
 
     public static void createAndShowLoginGUI() {
         // Create the main login frame
@@ -385,6 +386,15 @@ public class GUI {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 fileUploadFrame.setVisible(true);
                 dashboardFrame.setVisible(false);
+            }
+        });
+        
+        // The window listener to the `fileUploadFrame` in Java Swing. When the
+        // window is closing, it will make the `dashboardFrame` visible.
+        fileUploadFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent evt){
+                dashboardFrame.setVisible(true);
             }
         });
 
