@@ -5,9 +5,11 @@
  */
 package com.securefile;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
@@ -33,36 +35,92 @@ public class Backend {
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = ""; // Replace with your database password
 
+    // Table Names
+    private static final String USER_TABLE = "users";
+    private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
+    private static final String KEY_TABLE = "keys";
+
     // Encryption Keys
     private static SecretKey aesSecretKey;
     private static SecretKey desSecretKey;
 
-    // Table Names
-    private static final String USER_TABLE = "users";
-    private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
-
     // User session
     private static UserSession userSession = UserSession.getInstance();
 
+    // Initialize encryption keys
     public static void initializeEncryptionKeys() {
         try {
-            generateAESKey();
-            generateDESKey();
-        } catch (NoSuchAlgorithmException e) {
+            // Check if keys are already stored in the database
+            aesSecretKey = retrieveKey("aes_key");
+            desSecretKey = retrieveKey("des_key");
+
+            // If keys are not found in the database, generate new ones
+            if (aesSecretKey == null) {
+                aesSecretKey = generateKey("AES");
+                storeKey("aes_key", aesSecretKey);
+            }
+            if (desSecretKey == null) {
+                desSecretKey = generateKey("DES");
+                storeKey("des_key", desSecretKey);
+            }
+        } catch (GeneralSecurityException | SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private static void generateAESKey() throws NoSuchAlgorithmException {
-        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(256);
-        aesSecretKey = keyGen.generateKey();
+    // Generate a new secret key
+    private static SecretKey generateKey(String algorithm) throws NoSuchAlgorithmException {
+        KeyGenerator keyGen = KeyGenerator.getInstance(algorithm);
+        return keyGen.generateKey();
     }
 
-    private static void generateDESKey() throws NoSuchAlgorithmException {
-        KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-        keyGen.init(56);
-        desSecretKey = keyGen.generateKey();
+    // Store a secret key in the database
+    private static void storeKey(String keyName, SecretKey key) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection
+                        .prepareStatement("INSERT INTO `" + KEY_TABLE + "` (key_name, key_data) VALUES (?, ?)")) {
+            statement.setString(1, keyName);
+            statement.setBytes(2, serialize(key));
+            statement.executeUpdate();
+        }
+    }
+
+    // Retrieve a secret key from the database
+    private static SecretKey retrieveKey(String keyName) throws SQLException {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection
+                        .prepareStatement("SELECT key_data FROM `" + KEY_TABLE + "` WHERE key_name = ?")) {
+            statement.setString(1, keyName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return (SecretKey) deserialize(resultSet.getBytes("key_data"));
+                }
+            }
+        }
+        return null;
+    }
+
+    // Serialize an object into a byte array
+    private static byte[] serialize(Object object) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(object);
+            return bos.toByteArray();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Deserialize a byte array into an object
+    private static Object deserialize(byte[] bytes) {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+                ObjectInputStream ois = new ObjectInputStream(bis)) {
+            return ois.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
@@ -137,10 +195,10 @@ public class Backend {
         }
     }
 
-
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE + " (file_name, encrypted_data, user_id) VALUES (?, ?, ?)";
+            String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE
+                    + " (file_name, encrypted_data, user_id) VALUES (?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
                 insertStatement.setString(1, Paths.get(filePath).getFileName().toString());
                 insertStatement.setBytes(2, encryptedData);
@@ -151,7 +209,6 @@ public class Backend {
             ex.printStackTrace();
         }
     }
-    
 
     public static byte[] downloadEncryptedFileFromServer(String fileName) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
@@ -186,7 +243,8 @@ public class Backend {
     public static boolean doesFileExist(String fileName, int userId) {
         boolean exists = false;
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String sql = "SELECT COUNT(*) AS count FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_name = ? AND user_id = ?";
+            String sql = "SELECT COUNT(*) AS count FROM " + ENCRYPTED_FILES_TABLE
+                    + " WHERE file_name = ? AND user_id = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, fileName);
                 statement.setInt(2, userId);
@@ -202,7 +260,6 @@ public class Backend {
         }
         return exists;
     }
-    
 
     // Method to fetch file data from the server
     public static Object[][] fetchFileData(int userId) {
@@ -228,8 +285,7 @@ public class Backend {
             return new Object[0][0]; // Return an empty array in case of an error
         }
     }
-    
-    
+
     public static boolean deleteFileFromServer(int fileId, String fileName) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String deleteSql = "DELETE FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_id = ?";

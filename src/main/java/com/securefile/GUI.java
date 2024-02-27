@@ -33,7 +33,6 @@ public class GUI {
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
-    private static boolean fileUploadSuccess = false;
 
     public static void createAndShowLoginGUI() {
         // Create the main login frame
