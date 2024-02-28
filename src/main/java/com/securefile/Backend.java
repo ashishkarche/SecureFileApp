@@ -18,6 +18,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -29,21 +30,20 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
+
+import java.sql.Timestamp;
 
 import javax.mail.*;
-import javax.mail.MessagingException;
-import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
-
 
 public class Backend {
     // Database Connection Constants
     private static final String DB_URL = "jdbc:mysql://localhost:3306/filedatabase";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = ""; // Replace with your database password
-
+    
     // Table Names
     private static final String USER_TABLE = "users";
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
@@ -315,44 +315,56 @@ public class Backend {
         return userSession.getEmail();
     }
 
-    public static String generateDownloadLink(String fileName) {
-        // Generate a unique download link for the file
-        // You can use a random token or timestamp to make the link unique
-        // For example:
-        // String downloadLink = "http://example.com/download?file=" + fileName +
-        // "&token=" + generateRandomToken();
-        return "http://example.com/download?file=" + fileName; // Example download link
+     // Method to generate a secure download link
+    public static String generateDownloadLink(String fileName, int fileId, int userId, String linkExpiryTime) {
+        // Generate a unique token for the download link
+        String token = UUID.randomUUID().toString();
+
+        // Save the token, file name, file id, user id, and link expiry time in the database
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                insertStatement.setString(1, token);
+                insertStatement.setString(2, fileName);
+                insertStatement.setInt(3, fileId);
+                insertStatement.setInt(4, userId);
+                insertStatement.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now().plusMinutes(Long.parseLong(linkExpiryTime))));
+                insertStatement.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        // Construct and return the download link
+        String baseUrl = "http://localhost/download/"; // Replace with your actual domain
+        return baseUrl + token;
     }
+
+    private static final String SENDGRID_API_KEY = "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";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
         Properties properties = new Properties();
-        properties.put("mail.smtp.host", "your_smtp_host"); // Replace with your SMTP host
-        properties.put("mail.smtp.port", "your_smtp_port"); // Replace with your SMTP port
-        properties.put("mail.smtp.auth", "true"); // Enable authentication
-        properties.put("mail.smtp.starttls.enable", "true"); // Enable TLS encryption
-
-        // Sender's credentials
-        String username = "your_email@example.com"; // Replace with your email address
-        String password = "your_email_password"; // Replace with your email password
+        properties.put("mail.smtp.host", "smtp.sendgrid.net");
+        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
 
         // Create a session with authentication
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password);
+                return new PasswordAuthentication("apikey", SENDGRID_API_KEY);
             }
         });
 
         try {
             // Create a MimeMessage object
             Message mimeMessage = new MimeMessage(session);
-            mimeMessage.setFrom(new InternetAddress(senderEmail)); // Set the sender's email address
-            mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(receiverEmail)); // Set the
-                                                                                                    // recipient's email
-                                                                                                    // address
-            mimeMessage.setSubject("File sharing"); // Set the email subject
-            mimeMessage.setText(message); // Set the email message
+            mimeMessage.setFrom(new InternetAddress(senderEmail));
+            mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(receiverEmail));
+            mimeMessage.setSubject("File sharing");
+            mimeMessage.setText(message);
 
             // Send the email
             Transport.send(mimeMessage);

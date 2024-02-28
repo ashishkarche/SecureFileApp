@@ -392,15 +392,23 @@ public class GUI {
                 // Get the selected row in the table
                 int selectedRow = fileTable.getSelectedRow();
                 if (selectedRow != -1) {
+
+                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
                     // Retrieve the file name from the selected row
                     String fileName = (String) fileTable.getValueAt(selectedRow, 1);
+
+                    // Get the current user's ID
+                    int userId = UserSession.getInstance().getUserId();
+
+                    // Set the expiry time for the download link (in minutes)
+                    String linkExpiryTime = "60"; // Change this as needed
 
                     // Prompt the user to enter the receiver's email address
                     String receiverEmail = JOptionPane.showInputDialog(dashboardFrame, "Enter receiver's email:");
 
                     if (receiverEmail != null && !receiverEmail.isEmpty()) {
                         // Generate the download link for the file
-                        String downloadLink = Backend.generateDownloadLink(fileName);
+                        String downloadLink = Backend.generateDownloadLink(fileName, fileId, userId, linkExpiryTime);
 
                         // Send an email to the receiver with the download link
                         Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),
