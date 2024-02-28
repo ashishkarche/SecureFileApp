@@ -29,14 +29,11 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.mail.*;
-import javax.mail.MessagingException;
-import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
-
 
 public class Backend {
     // Database Connection Constants
@@ -316,25 +313,36 @@ public class Backend {
     }
 
     public static String generateDownloadLink(String fileName) {
-        // Generate a unique download link for the file
-        // You can use a random token or timestamp to make the link unique
-        // For example:
-        // String downloadLink = "http://example.com/download?file=" + fileName +
-        // "&token=" + generateRandomToken();
-        return "http://example.com/download?file=" + fileName; // Example download link
+        // Base URL where files are hosted on the XAMPP server
+        String baseUrl = "http://localhost/files/";
+
+        // Generate a random token
+        String token = generateRandomToken();
+
+        // Append the filename and token to the base URL to create the download link
+        return baseUrl + fileName + "?token=" + token;
+    }
+
+    // Generate a random token (UUID)
+    private static String generateRandomToken() {
+        return UUID.randomUUID().toString();
     }
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
+
+        String host = "smtp.gmail.com";
+        
         Properties properties = new Properties();
-        properties.put("mail.smtp.host", "your_smtp_host"); // Replace with your SMTP host
-        properties.put("mail.smtp.port", "your_smtp_port"); // Replace with your SMTP port
+        properties.put("mail.smtp.host", host); // Replace with your SMTP host
+        properties.put("mail.smtp.port", "587"); // Replace with your SMTP port
         properties.put("mail.smtp.auth", "true"); // Enable authentication
         properties.put("mail.smtp.starttls.enable", "true"); // Enable TLS encryption
+        
 
         // Sender's credentials
-        String username = "your_email@example.com"; // Replace with your email address
-        String password = "your_email_password"; // Replace with your email password
+        String username = getSenderEmail(); // Replace with your email address
+        String password = "syhf vhpf svks mtfp"; // Replace with your email password
 
         // Create a session with authentication
         Session session = Session.getInstance(properties, new Authenticator() {
