@@ -340,6 +340,7 @@ public class Backend {
         return baseUrl + token;
     }
 
+    
     private static final String SENDGRID_API_KEY = "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";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
