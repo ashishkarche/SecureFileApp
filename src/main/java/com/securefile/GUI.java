@@ -384,8 +384,6 @@ public class GUI {
             }
         });
 
-        // Inside the createAndShowDashboardGUI method, add the following ActionListener
-        // for the shareButton:
         shareButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
