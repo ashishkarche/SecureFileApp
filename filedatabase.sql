@@ -35,3 +35,12 @@ CREATE TABLE `keys` (
     key_name VARCHAR(50) NOT NULL,
     key_data BLOB NOT NULL
 );
+
+CREATE TABLE download_links (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_id INT NOT NULL,
+    user_id INT NOT NULL,
+    link_expiry_time TIMESTAMP NOT NULL
+);
