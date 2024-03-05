@@ -10,16 +10,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 // import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.security.GeneralSecurityException;
 
 public class GUI {
@@ -33,6 +36,11 @@ public class GUI {
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
+
+    public static String ImagePath = "src/main/resources/plus.png"; // Replace Image Path
+
+    // Create a flag to track email verification
+    public static AtomicBoolean emailVerified = new AtomicBoolean(false);
 
     public static void createAndShowLoginGUI() {
         // Create the main login frame
@@ -49,6 +57,10 @@ public class GUI {
         JButton loginButton = new JButton("Login");
         JButton registerButton = new JButton("Don't have an account? Register");
 
+        // Create dropdown for user/admin selection
+        String[] userTypes = { "User", "Admin" };
+        JComboBox<String> userTypeComboBox = new JComboBox<>(userTypes);
+
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(10, 10, 10, 10);
         c.gridwidth = 2;
@@ -63,6 +75,8 @@ public class GUI {
         loginFrame.add(new JLabel("Username:"), c);
         c.gridy = 2;
         loginFrame.add(new JLabel("Password:"), c);
+        c.gridy = 3;
+        loginFrame.add(new JLabel("User Type:"), c);
         c.gridwidth = 2;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridy = 1;
@@ -71,10 +85,12 @@ public class GUI {
         c.gridy = 2;
         loginFrame.add(passwordField, c);
         c.gridy = 3;
+        loginFrame.add(userTypeComboBox, c);
+        c.gridy = 4;
         c.gridx = 0;
         c.gridwidth = 2;
         loginFrame.add(loginButton, c);
-        c.gridy = 4;
+        c.gridy = 5;
         loginFrame.add(registerButton, c);
 
         // Create the registration frame
@@ -90,6 +106,7 @@ public class GUI {
         regPasswordField = new JPasswordField(20);
         JButton regRegisterButton = new JButton("Register");
         JButton backButton = new JButton("Back to Login");
+        JButton emailVerifyButton = new JButton("Verify Email");
 
         passwordLengthLabel = new JLabel();
 
@@ -125,6 +142,8 @@ public class GUI {
         registrationFrame.add(backButton, c);
         c.gridy = 6;
         registrationFrame.add(passwordLengthLabel, c);
+        c.gridy = 7;
+        registrationFrame.add(emailVerifyButton, c);
 
         // Create the file upload frame
         fileUploadFrame = new JFrame("File Upload");
@@ -132,7 +151,7 @@ public class GUI {
         fileUploadFrame.setSize(500, 500);
         fileUploadFrame.setLayout(new GridBagLayout());
 
-        JLabel plusSignLabel = new JLabel(new ImageIcon("src/main/resources/plus.png"));
+        JLabel plusSignLabel = new JLabel(new ImageIcon(ImagePath));
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
@@ -166,14 +185,28 @@ public class GUI {
                 String username = usernameField.getText();
                 char[] passwordChars = passwordField.getPassword();
                 String password = new String(passwordChars);
+                String userType = (String) userTypeComboBox.getSelectedItem();
 
-                if (Backend.authenticateUser(username, password)) {
-                    // Login successful, show dashboard
-                    createAndShowDashboardGUI(username);
-                    loginFrame.setVisible(false);
-                } else {
-                    JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
-                            JOptionPane.ERROR_MESSAGE);
+                if (userType.equals("User")) {
+                    // Perform user login authentication
+                    if (Backend.authenticateUser(username, password)) {
+                        // Login successful, show user dashboard
+                        createAndShowDashboardGUI(username);
+                        loginFrame.setVisible(false);
+                    } else {
+                        JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else if (userType.equals("Admin")) {
+                    // Perform admin login authentication
+                    if (Backend.authenticateAdmin(username, password)) {
+                        // Admin login successful, show admin dashboard
+                        createAndShowAdminDashboardGUI();
+                        loginFrame.setVisible(false);
+                    } else {
+                        JOptionPane.showMessageDialog(loginFrame, "Invalid admin credentials", "Login Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -189,10 +222,32 @@ public class GUI {
         regRegisterButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                if (!emailVerified.get()) {
+                    // Display an alert if email is not verified
+                    JOptionPane.showMessageDialog(registrationFrame, "Please verify your email address.",
+                            "Email Verification Required",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
                 String email = regEmailField.getText(); // Retrieve email
                 String username = regUsernameField.getText();
                 char[] passwordChars = regPasswordField.getPassword();
                 String password = new String(passwordChars);
+
+                // Check if the email is already registered
+                if (Backend.isEmailRegistered(email)) {
+                    JOptionPane.showMessageDialog(registrationFrame, "Email already registered", "Registration Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Check if the username is already taken
+                if (Backend.isUsernameTaken(username)) {
+                    JOptionPane.showMessageDialog(registrationFrame, "Username already taken", "Registration Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
                 if (password.length() != 8) { // Check password length
                     passwordLengthLabel.setText("Password should be 8 characters long");
@@ -201,6 +256,7 @@ public class GUI {
                     passwordLengthLabel.setText(""); // Clear password length message
                 }
 
+                // Register the user
                 if (Backend.registerUser(email, username, password)) { // Register user with email
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
@@ -218,6 +274,31 @@ public class GUI {
             public void actionPerformed(ActionEvent e) {
                 loginFrame.setVisible(true);
                 registrationFrame.setVisible(false);
+            }
+        });
+
+        // Action listener for email verification button
+        emailVerifyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String emailAddress = regEmailField.getText();
+                if (Backend.isValidEmail(emailAddress)) {
+                    // Open the SendGrid signup page for email verification
+                    try {
+                        Desktop.getDesktop().browse(new URI("https://signup.sendgrid.com/"));
+                        // Set email verification flag to true
+                        emailVerified.set(true);
+                        // Enable the register button
+                        regRegisterButton.setEnabled(true);
+                    } catch (IOException | URISyntaxException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(registrationFrame, "Error opening browser.", "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(registrationFrame, "Invalid email address.", "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -302,7 +383,7 @@ public class GUI {
         dashboardFrame.add(dashboardPanel);
 
         // Add the plus.png icon in the right-hand corner
-        ImageIcon plusIcon = new ImageIcon("src/main/resources/plus.png");
+        ImageIcon plusIcon = new ImageIcon(ImagePath);
         Image smallPlusImage = plusIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
         ImageIcon smallPlusIcon = new ImageIcon(smallPlusImage);
         JLabel plusLabel = new JLabel(smallPlusIcon);
@@ -533,6 +614,92 @@ public class GUI {
     private static void clearLoginFields() {
         usernameField.setText("");
         passwordField.setText("");
+    }
+
+    public static void createAndShowAdminDashboardGUI() {
+        JFrame adminDashboardFrame = new JFrame("Admin Dashboard");
+        adminDashboardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        adminDashboardFrame.setSize(800, 600);
+
+        JPanel adminDashboardPanel = new JPanel(new BorderLayout());
+        adminDashboardFrame.add(adminDashboardPanel);
+
+        // Fetch users data from the database initially
+        Object[][] userData = Backend.fetchAllUsersData();
+        String[] columnNames = { "User ID", "Username", "Email" };
+
+        JTable userTable = new JTable(userData, columnNames);
+        JScrollPane scrollPane = new JScrollPane(userTable);
+        adminDashboardPanel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton deleteUserButton = new JButton("Delete User");
+        buttonPanel.add(deleteUserButton);
+        adminDashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add logout button in the bottom right corner
+        JButton logoutButton = new JButton("Logout");
+        buttonPanel.add(logoutButton);
+        adminDashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        deleteUserButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedRow = userTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    int userId = (int) userTable.getValueAt(selectedRow, 0);
+                    deleteUser(adminDashboardFrame, userId, userTable, selectedRow);
+                } else {
+                    JOptionPane.showMessageDialog(adminDashboardFrame, "Please select a user to delete.",
+                            "Warning", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Logout the user
+                UserSession.getInstance().logoutUser();
+
+                clearLoginFields();
+
+                // Close file upload frame
+                adminDashboardFrame.dispose();
+
+                // Show login frame
+                loginFrame.setVisible(true);
+            }
+        });
+
+        adminDashboardFrame.setVisible(true);
+    }
+
+    private static void deleteUser(JFrame adminDashboardFrame, int userId, JTable userTable, int selectedRow) {
+        boolean deleted = Backend.deleteUser(userId);
+        if (deleted) {
+            JOptionPane.showMessageDialog(adminDashboardFrame, "User deleted successfully.");
+            // Refresh the table
+            refreshUserTable(userTable, selectedRow);
+        } else {
+            JOptionPane.showMessageDialog(adminDashboardFrame, "Error deleting user.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static void refreshUserTable(JTable userTable, int selectedRow) {
+        DefaultTableModel model = (DefaultTableModel) userTable.getModel();
+        model.setRowCount(0); // Clear existing data
+        Object[][] userData = Backend.fetchAllUsersData();
+        for (Object[] row : userData) {
+            model.addRow(row);
+        }
+        // Select the next row after deletion
+        if (selectedRow < model.getRowCount()) {
+            userTable.setRowSelectionInterval(selectedRow, selectedRow);
+        } else if (selectedRow > 0) {
+            userTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
+        }
     }
 
 }

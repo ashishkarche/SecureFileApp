@@ -31,7 +31,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.sql.Timestamp;
 
 import javax.mail.*;
@@ -43,7 +44,7 @@ public class Backend {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/filedatabase";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = ""; // Replace with your database password
-    
+
     // Table Names
     private static final String USER_TABLE = "users";
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
@@ -189,6 +190,21 @@ public class Backend {
         return false;
     }
 
+    public static boolean authenticateAdmin(String username, String password) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement(
+                        "SELECT id FROM admins WHERE username = ? AND password = ?")) {
+            statement.setString(1, username);
+            statement.setString(2, password);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next(); // If result set has at least one row, admin authentication is successful
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
     // User Registration code
     public static boolean registerUser(String email, String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -204,6 +220,115 @@ public class Backend {
             return false;
         }
     }
+
+    // Method to validate email address format
+    public static boolean isValidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
+    // Check if the email is already registered
+    public static boolean isEmailRegistered(String email) {
+        boolean isRegistered = false;
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Establish database connection
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+
+            // Prepare SQL statement to check if the email is registered
+            String sql = "SELECT COUNT(*) AS count FROM users WHERE email = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, email);
+
+            // Execute the query
+            rs = stmt.executeQuery();
+
+            // Check if any rows are returned
+            if (rs.next()) {
+                int count = rs.getInt("count");
+                if (count > 0) {
+                    // Email is registered
+                    isRegistered = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle database errors
+        } finally {
+            // Close the database resources
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return isRegistered;
+    }
+
+    // Check if the username is already taken
+    public static boolean isUsernameTaken(String username) {
+        boolean isTaken = false;
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Establish database connection
+            conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+
+            // Prepare SQL statement to check if the username is taken
+            String sql = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, username);
+
+            // Execute the query
+            rs = stmt.executeQuery();
+
+            // Check if any rows are returned
+            if (rs.next()) {
+                int count = rs.getInt("count");
+                if (count > 0) {
+                    // Username is taken
+                    isTaken = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle database errors
+        } finally {
+            // Close the database resources
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return isTaken;
+    }
+
 
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
@@ -296,6 +421,37 @@ public class Backend {
         }
     }
 
+
+    public static Object[][] fetchAllUsersData() {
+        List<User> userList = new ArrayList<>();
+
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement("SELECT id, username, email FROM users");
+                ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String username = resultSet.getString("username");
+                String email = resultSet.getString("email");
+                userList.add(new User(id, username, email));
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        // Convert the list of users to a two-dimensional array
+        Object[][] userData = new Object[userList.size()][3];
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            userData[i][0] = user.getId();
+            userData[i][1] = user.getUsername();
+            userData[i][2] = user.getEmail();
+        }
+
+        return userData;
+    }
+
     public static boolean deleteFileFromServer(int fileId, String fileName) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String deleteSql = "DELETE FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_id = ?";
@@ -310,17 +466,42 @@ public class Backend {
         }
     }
 
+    public static boolean deleteUser(int userId) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            // Delete associated rows in the encrypted_files table
+            String deleteFilesSql = "DELETE FROM encrypted_files WHERE user_id = ?";
+            try (PreparedStatement deleteFilesStatement = connection.prepareStatement(deleteFilesSql)) {
+                deleteFilesStatement.setInt(1, userId);
+                deleteFilesStatement.executeUpdate();
+            }
+    
+            // Now delete the user
+            String deleteUserSql = "DELETE FROM users WHERE id = ?";
+            try (PreparedStatement deleteUserStatement = connection.prepareStatement(deleteUserSql)) {
+                deleteUserStatement.setInt(1, userId);
+                int rowsAffected = deleteUserStatement.executeUpdate();
+                return rowsAffected > 0;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+    
+    
+
     // Retrieve sender's email from the user session
     public static String getSenderEmail() {
         return userSession.getEmail();
     }
 
-     // Method to generate a secure download link
+    // Method to generate a secure download link
     public static String generateDownloadLink(String fileName, int fileId, int userId, String linkExpiryTime) {
         // Generate a unique token for the download link
         String token = UUID.randomUUID().toString();
 
-        // Save the token, file name, file id, user id, and link expiry time in the database
+        // Save the token, file name, file id, user id, and link expiry time in the
+        // database
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
@@ -328,7 +509,8 @@ public class Backend {
                 insertStatement.setString(2, fileName);
                 insertStatement.setInt(3, fileId);
                 insertStatement.setInt(4, userId);
-                insertStatement.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now().plusMinutes(Long.parseLong(linkExpiryTime))));
+                insertStatement.setTimestamp(5,
+                        Timestamp.valueOf(LocalDateTime.now().plusMinutes(Long.parseLong(linkExpiryTime))));
                 insertStatement.executeUpdate();
             }
         } catch (SQLException ex) {
@@ -340,8 +522,7 @@ public class Backend {
         return baseUrl + token;
     }
 
-    
-    private static final String SENDGRID_API_KEY = "YOUR_API_KEY";
+    private static final String SENDGRID_API_KEY = "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";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
