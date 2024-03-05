@@ -522,7 +522,7 @@ public class Backend {
         return baseUrl + token;
     }
 
-    private static final String SENDGRID_API_KEY = "YOUR_API_KEY";
+    private static final String SENDGRID_API_KEY = "Your_api_key";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties

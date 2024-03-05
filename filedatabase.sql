@@ -44,3 +44,10 @@ CREATE TABLE download_links (
     user_id INT NOT NULL,
     link_expiry_time TIMESTAMP NOT NULL
 );
+
+
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
