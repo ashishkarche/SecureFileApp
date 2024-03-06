@@ -10,6 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
@@ -167,19 +170,23 @@ public class Backend {
         return cipher.doFinal(encryptedData);
     }
 
-    // User login authentication code
-    public static boolean authenticateUser(String username, String password) {
+    // User login authentication code with IP address verification
+    public static boolean authenticateUser(String username, String password, String ipAddress) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT id, username, email, password FROM " + USER_TABLE + " WHERE username = ?")) {
+                        "SELECT id, username, email, password, ip_address FROM " + USER_TABLE
+                                + " WHERE username = ?")) {
             statement.setString(1, username);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     int userId = resultSet.getInt("id");
                     String userEmail = resultSet.getString("email"); // Retrieve user's email
                     String hashedPassword = resultSet.getString("password");
-                    if (verifyPassword(password, hashedPassword)) {
-                        userSession.loginUser(userId, username, userEmail); // Store user's email in the session
+                    String savedIpAddress = resultSet.getString("ip_address");
+                    // Verify userername, password, and IP address
+                    if (verifyPassword(password, hashedPassword) && ipAddress.equals(savedIpAddress)) {
+                        // Store user's email in the session
+                        userSession.loginUser(userId, username, userEmail);
                         return true;
                     }
                 }
@@ -206,13 +213,14 @@ public class Backend {
     }
 
     // User Registration code
-    public static boolean registerUser(String email, String username, String password) {
+    public static boolean registerUser(String email, String username, String password, String ipAddress) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "INSERT INTO " + USER_TABLE + " (email, username, password) VALUES (?, ?, ?)")) {
+                        "INSERT INTO " + USER_TABLE + " (email, username, password, ip_address) VALUES (?, ?, ?, ?)")) {
             statement.setString(1, email); // Add email to registration query
             statement.setString(2, username);
             statement.setString(3, hashPassword(password)); // Hashing the password
+            statement.setString(4, ipAddress); // Hashing the password
             int rowsAffected = statement.executeUpdate();
             return rowsAffected > 0; // If at least one row is affected, registration succeeds
         } catch (SQLException | NoSuchAlgorithmException ex) {
@@ -329,7 +337,6 @@ public class Backend {
         return isTaken;
     }
 
-
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE
@@ -421,7 +428,6 @@ public class Backend {
         }
     }
 
-
     public static Object[][] fetchAllUsersData() {
         List<User> userList = new ArrayList<>();
 
@@ -474,7 +480,7 @@ public class Backend {
                 deleteFilesStatement.setInt(1, userId);
                 deleteFilesStatement.executeUpdate();
             }
-    
+
             // Now delete the user
             String deleteUserSql = "DELETE FROM users WHERE id = ?";
             try (PreparedStatement deleteUserStatement = connection.prepareStatement(deleteUserSql)) {
@@ -487,8 +493,6 @@ public class Backend {
             return false;
         }
     }
-    
-    
 
     // Retrieve sender's email from the user session
     public static String getSenderEmail() {
@@ -500,13 +504,29 @@ public class Backend {
         // Generate a unique token for the download link
         String token = UUID.randomUUID().toString();
 
+        // Encrypt the file before sharing
+        byte[] encryptedFileData = downloadEncryptedFileFromServer(fileId, userId);
+
+        // Save the encrypted file in the download folder
+        String downloadFolderPath = "C:/xampp/htdocs/download/"; // Update with your actual download folder path
+        String encryptedFileName = fileName.substring(0, fileName.lastIndexOf('.')) + "_encrypted"
+                + fileName.substring(fileName.lastIndexOf('.'));
+        String encryptedFilePath = downloadFolderPath + encryptedFileName;
+
+        try {
+            // Write the encrypted file data to the file
+            Files.write(Paths.get(encryptedFilePath), encryptedFileData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         // Save the token, file name, file id, user id, and link expiry time in the
         // database
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
                 insertStatement.setString(1, token);
-                insertStatement.setString(2, fileName);
+                insertStatement.setString(2, encryptedFileName); // Store the encrypted file name
                 insertStatement.setInt(3, fileId);
                 insertStatement.setInt(4, userId);
                 insertStatement.setTimestamp(5,
@@ -522,7 +542,7 @@ public class Backend {
         return baseUrl + token;
     }
 
-    private static final String SENDGRID_API_KEY = "Your_api_key";
+    private static final String SENDGRID_API_KEY = "YOUR_API_KEY";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
@@ -557,5 +577,15 @@ public class Backend {
             e.printStackTrace();
             System.err.println("Failed to send email.");
         }
+    }
+    // Method to fetch IP address
+    public static String getIpAddress() {
+        try {
+            InetAddress localhost = InetAddress.getLocalHost();
+            return localhost.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

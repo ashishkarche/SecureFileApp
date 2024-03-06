@@ -187,9 +187,12 @@ public class GUI {
                 String password = new String(passwordChars);
                 String userType = (String) userTypeComboBox.getSelectedItem();
 
+                // Get the IP address
+                String ipAddress = Backend.getIpAddress();
+
                 if (userType.equals("User")) {
                     // Perform user login authentication
-                    if (Backend.authenticateUser(username, password)) {
+                    if (Backend.authenticateUser(username, password, ipAddress)) {
                         // Login successful, show user dashboard
                         createAndShowDashboardGUI(username);
                         loginFrame.setVisible(false);
@@ -234,6 +237,7 @@ public class GUI {
                 String username = regUsernameField.getText();
                 char[] passwordChars = regPasswordField.getPassword();
                 String password = new String(passwordChars);
+                String ipAddress = Backend.getIpAddress();
 
                 // Check if the email is already registered
                 if (Backend.isEmailRegistered(email)) {
@@ -257,7 +261,7 @@ public class GUI {
                 }
 
                 // Register the user
-                if (Backend.registerUser(email, username, password)) { // Register user with email
+                if (Backend.registerUser(email, username, password,ipAddress)) { // Register user with email
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
                     registrationFrame.setVisible(false);
