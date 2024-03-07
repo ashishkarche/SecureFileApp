@@ -12,7 +12,7 @@ public class User {
     }
 
     // Getters and setters for id, username, and email
-    // You can generate these using your IDE or write them manually
+    // generate these using your IDE or write them manually
     public int getId() {
         return id;
     }
