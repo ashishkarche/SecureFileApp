@@ -141,17 +141,7 @@ public class Backend {
         }
     }
 
-    /**
-     * The function `encryptFileData` encrypts file data using AES and DES encryption algorithms and
-     * returns the combined encrypted data.
-     * 
-     * @param fileData The `fileData` parameter is a byte array that represents the data of a file that
-     * you want to encrypt. This data will be encrypted using two different encryption algorithms, AES
-     * and DES, with their respective secret keys (`aesSecretKey` and `desSecretKey`). The method
-     * `encrypt` is
-     * @return The `encryptFileData` method returns a byte array containing the encrypted data using
-     * both AES and DES encryption algorithms.
-     */
+
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
         byte[] encryptedDataAES = encrypt(fileData, aesSecretKey, "AES");
         byte[] encryptedDataDES = encrypt(fileData, desSecretKey, "DES");
@@ -161,17 +151,6 @@ public class Backend {
         return outputStream.toByteArray();
     }
 
-    /**
-     * This Java function decrypts a byte array containing data encrypted with both AES and DES
-     * algorithms and returns the decrypted data.
-     * 
-     * @param encryptedData The `decryptFileData` method you provided seems to be decrypting a file
-     * that has been encrypted using both AES and DES algorithms. The method splits the encrypted data
-     * into two halves, decrypts each half using the corresponding secret key and algorithm, and then
-     * combines the decrypted data before returning it.
-     * @return The `decryptFileData` method returns a byte array containing the decrypted data from
-     * both the AES and DES encryption algorithms.
-     */
     public static byte[] decryptFileData(byte[] encryptedData) throws GeneralSecurityException, IOException {
         int halfLength = encryptedData.length / 2;
         byte[] encryptedDataAES = Arrays.copyOfRange(encryptedData, 0, halfLength);
@@ -184,44 +163,14 @@ public class Backend {
         return outputStream.toByteArray();
     }
 
-    /**
-     * The function encrypts a byte array using a specified algorithm and secret key in Java.
-     * 
-     * @param data The `data` parameter is the byte array that you want to encrypt using the specified
-     * algorithm and secret key.
-     * @param key The `key` parameter in the `encrypt` method is of type `SecretKey` and is used as the
-     * secret key for encryption. It is essential for encrypting the data using the specified
-     * algorithm.
-     * @param algorithm The `algorithm` parameter in the `encrypt` method refers to the specific
-     * encryption algorithm that will be used for encrypting the data. Examples of encryption
-     * algorithms include AES (Advanced Encryption Standard), DES (Data Encryption Standard), and RSA
-     * (Rivest-Shamir-Adleman). The algorithm
-     * @return The method `encrypt` returns a byte array that represents the encrypted data after
-     * performing encryption using the specified algorithm and secret key.
-     */
+
     private static byte[] encrypt(byte[] data, SecretKey key, String algorithm) throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(algorithm);
         cipher.init(Cipher.ENCRYPT_MODE, key);
         return cipher.doFinal(data);
     }
 
-    /**
-     * The `decrypt` function takes encrypted data, a secret key, and an encryption algorithm as input,
-     * then decrypts the data using the specified algorithm and returns the decrypted byte array.
-     * 
-     * @param encryptedData The `encryptedData` parameter is a byte array that contains the data to be
-     * decrypted. This data has been encrypted using a specific encryption algorithm and needs to be
-     * decrypted using the provided secret key and algorithm.
-     * @param key The `key` parameter in the `decrypt` method is a `SecretKey` object that is used for
-     * decryption. This key should be the same key that was used for encryption in order to
-     * successfully decrypt the data.
-     * @param algorithm The `algorithm` parameter in the `decrypt` method refers to the specific
-     * cryptographic algorithm that is used for decryption. Examples of cryptographic algorithms
-     * include AES (Advanced Encryption Standard), DES (Data Encryption Standard), and RSA
-     * (Rivest-Shamir-Adleman). When calling the `decrypt`
-     * @return The method is returning the decrypted byte array after performing the decryption
-     * operation using the provided key and algorithm.
-     */
+
     private static byte[] decrypt(byte[] encryptedData, SecretKey key, String algorithm)
             throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance(algorithm);
@@ -256,21 +205,7 @@ public class Backend {
         return false;
     }
 
-    /**
-     * The function `authenticateAdmin` checks if the provided username and password match an entry in
-     * the admins table of a database and returns true if authentication is successful.
-     * 
-     * @param username The `username` parameter is the username of the admin trying to authenticate.
-     * @param password The `password` parameter in the `authenticateAdmin` method is the password
-     * provided by the user attempting to authenticate as an admin. This password is used in
-     * conjunction with the `username` to query the database and check if there is a matching record in
-     * the `admins` table with the provided username and
-     * @return The method `authenticateAdmin` returns a boolean value indicating whether the
-     * authentication of an admin with the given username and password was successful. If the query to
-     * the database returns at least one row for the provided username and password in the admins
-     * table, the method returns `true`, indicating successful authentication. If there is an SQL
-     * exception during the process, the method catches the exception, prints the stack trace, and
-     */
+
     public static boolean authenticateAdmin(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
@@ -287,27 +222,7 @@ public class Backend {
     }
 
     
-    /**
-     * The `registerUser` function in Java registers a new user by checking email and username
-     * validity, hashing the password, and storing user information in a database table.
-     * 
-     * @param email Email address of the user registering for an account.
-     * @param username The `username` parameter in the `registerUser` method is a String that
-     * represents the username chosen by the user during the registration process. This username will
-     * be stored in the database along with other user information such as email, password, and IP
-     * address. It is used to uniquely identify the user within
-     * @param password The `password` parameter in the `registerUser` method is a String that
-     * represents the password chosen by the user during registration. This password is then hashed
-     * using a hashing algorithm before being stored in the database for security reasons.
-     * @param ipAddress The `ipAddress` parameter in the `registerUser` method is used to store the IP
-     * address of the user who is registering. This information can be helpful for tracking user
-     * activity, identifying potential security risks, and ensuring that each user account is
-     * associated with a unique IP address. Storing the IP
-     * @return The `registerUser` method returns a boolean value. It returns `true` if the user
-     * registration is successful (i.e., the user is successfully added to the database), and it
-     * returns `false` if the registration fails due to invalid email, existing email or username,
-     * database connection issues, password hashing errors, or any SQL exceptions.
-     */
+  
     public static boolean registerUser(String email, String username, String password, String ipAddress) {
         if (!isValidEmail(email) || isEmailRegistered(email) || isUsernameTaken(username)) {
             return false;
@@ -363,19 +278,7 @@ public class Backend {
         return false;
     }
 
-    /**
-     * The `uploadFileToServer` function uploads a file with encrypted data to a database server along
-     * with the user ID.
-     * 
-     * @param filePath The `filePath` parameter is a string that represents the path to the file that
-     * you want to upload to the server.
-     * @param encryptedData The `encryptedData` parameter in the `uploadFileToServer` method is a byte
-     * array that contains the encrypted data of the file to be uploaded to the server. This data is
-     * inserted into the database as part of the file upload process.
-     * @param userId The `userId` parameter in the `uploadFileToServer` method represents the unique
-     * identifier of the user who is uploading the file to the server. This user ID is used to
-     * associate the uploaded file with the specific user in the database.
-     */
+  
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE
@@ -391,21 +294,7 @@ public class Backend {
         }
     }
 
-    /**
-     * This Java function downloads an encrypted file from a server based on the file ID and user ID
-     * provided.
-     * 
-     * @param fileId The `fileId` parameter is an integer value that represents the unique identifier
-     * of the file that you want to download from the server.
-     * @param userId The `userId` parameter in the `downloadEncryptedFileFromServer` method represents
-     * the unique identifier of the user who is requesting to download the encrypted file from the
-     * server. This parameter is used in the SQL query to ensure that the file being accessed belongs
-     * to the specified user.
-     * @return A byte array containing the encrypted data of the file with the specified fileId and
-     * userId is being returned. If the file is found in the database, its encrypted data is retrieved
-     * and returned as a byte array. If the file is not found or an error occurs during the database
-     * operation, null is returned.
-     */
+  
     public static byte[] downloadEncryptedFileFromServer(int fileId, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
@@ -423,20 +312,7 @@ public class Backend {
         return null;
     }
 
-    /**
-     * The function `verifyPassword` compares a hashed password with a newly hashed input password to
-     * verify if they match.
-     * 
-     * @param password The `password` parameter in the `verifyPassword` method is the plain text
-     * password that you want to verify against the hashed password.
-     * @param hashedPassword The `hashedPassword` parameter in the `verifyPassword` method is the
-     * hashed version of the original password. It is the result of applying a cryptographic hash
-     * function (in this case, SHA-256) to the original password and then encoding the hashed bytes
-     * using Base64 encoding. The purpose of this
-     * @return The method `verifyPassword` is returning a boolean value, which indicates whether the
-     * input password matches the hashed password after hashing the input password using SHA-256
-     * algorithm and encoding it to Base64.
-     */
+   
     private static boolean verifyPassword(String password, String hashedPassword) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hashedBytes = md.digest(password.getBytes());
