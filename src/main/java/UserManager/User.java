@@ -1,4 +1,4 @@
-package com.securefile;
+package UserManager;
 
 public class User {
     private int id;

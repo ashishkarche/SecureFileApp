@@ -1,4 +1,5 @@
 package com.securefile;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,7 +12,6 @@ import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.MessageDigest;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,13 +22,9 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.mail.Authenticator;
@@ -40,14 +36,20 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import DatabaseManager.DatabaseConfig;
+import FileManager.FileDecryptor;
+import FileManager.FileEncryptor;
+import FileManager.FileManagement;
+import UserManager.UserAuthentication;
+import UserManager.UserSession;
+
 public class Backend {
     // Database Connection Constants
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/filedatabase";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = ""; // Replace with your database password
+    private static final String DB_URL = DatabaseConfig.getUrl();
+    private static final String DB_USER = DatabaseConfig.getUser();
+    private static final String DB_PASSWORD = DatabaseConfig.getPassword();
 
     // Table Names
-    private static final String USER_TABLE = "users";
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
     private static final String KEY_TABLE = "keys";
 
@@ -141,70 +143,35 @@ public class Backend {
         }
     }
 
-
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
-        byte[] encryptedDataAES = encrypt(fileData, aesSecretKey, "AES");
-        byte[] encryptedDataDES = encrypt(fileData, desSecretKey, "DES");
+        long startTime = System.nanoTime(); // Start time measurement
+        byte[] encryptedDataAES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
+        byte[] encryptedDataDES = FileEncryptor.encrypt(fileData, desSecretKey, "DES");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(encryptedDataAES);
         outputStream.write(encryptedDataDES);
+
+        long endTime = System.nanoTime(); // End time measurement
+        long elapsedTime = endTime - startTime; // Calculate elapsed time
+        System.out.println("Encryption Time: " + elapsedTime + " nanoseconds");
         return outputStream.toByteArray();
     }
 
     public static byte[] decryptFileData(byte[] encryptedData) throws GeneralSecurityException, IOException {
+        long startTime = System.nanoTime(); // Start time measurement
         int halfLength = encryptedData.length / 2;
         byte[] encryptedDataAES = Arrays.copyOfRange(encryptedData, 0, halfLength);
         byte[] encryptedDataDES = Arrays.copyOfRange(encryptedData, halfLength, encryptedData.length);
-        byte[] decryptedDataAES = decrypt(encryptedDataAES, aesSecretKey, "AES");
-        byte[] decryptedDataDES = decrypt(encryptedDataDES, desSecretKey, "DES");
+        byte[] decryptedDataAES = FileDecryptor.decrypt(encryptedDataAES, aesSecretKey, "AES");
+        byte[] decryptedDataDES = FileDecryptor.decrypt(encryptedDataDES, desSecretKey, "DES");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(decryptedDataAES);
         outputStream.write(decryptedDataDES);
+        long endTime = System.nanoTime(); // End time measurement
+        long elapsedTime = endTime - startTime; // Calculate elapsed time
+        System.out.println("Decryption Time: " + elapsedTime + " nanoseconds");
         return outputStream.toByteArray();
     }
-
-
-    private static byte[] encrypt(byte[] data, SecretKey key, String algorithm) throws GeneralSecurityException {
-        Cipher cipher = Cipher.getInstance(algorithm);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        return cipher.doFinal(data);
-    }
-
-
-    private static byte[] decrypt(byte[] encryptedData, SecretKey key, String algorithm)
-            throws GeneralSecurityException {
-        Cipher cipher = Cipher.getInstance(algorithm);
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        return cipher.doFinal(encryptedData);
-    }
-
-    // User login authentication code with IP address verification
-    public static boolean authenticateUser(String username, String password, String ipAddress) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(
-                        "SELECT id, username, email, password, ip_address FROM " + USER_TABLE
-                                + " WHERE username = ?")) {
-            statement.setString(1, username);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    int userId = resultSet.getInt("id");
-                    String userEmail = resultSet.getString("email"); // Retrieve user's email
-                    String hashedPassword = resultSet.getString("password");
-                    String savedIpAddress = resultSet.getString("ip_address");
-                    // Verify username, password, and IP address
-                    if (verifyPassword(password, hashedPassword) && ipAddress.equals(savedIpAddress)) {
-                        // Store user's email in the session
-                        userSession.loginUser(userId, username, userEmail);
-                        return true;
-                    }
-                }
-            }
-        } catch (SQLException | NoSuchAlgorithmException ex) {
-            ex.printStackTrace();
-        }
-        return false;
-    }
-
 
     public static boolean authenticateAdmin(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -221,114 +188,10 @@ public class Backend {
         }
     }
 
-    
-  
-    public static boolean registerUser(String email, String username, String password, String ipAddress) {
-        if (!isValidEmail(email) || isEmailRegistered(email) || isUsernameTaken(username)) {
-            return false;
-        }
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(
-                        "INSERT INTO " + USER_TABLE + " (email, username, password, ip_address) VALUES (?, ?, ?, ?)")) {
-            statement.setString(1, email); // Add email to registration query
-            statement.setString(2, username);
-            statement.setString(3, hashPassword(password)); // Hashing the password
-            statement.setString(4, ipAddress); // Store IP address
-            int rowsAffected = statement.executeUpdate();
-            return rowsAffected > 0; // If at least one row is affected, registration succeeds
-        } catch (SQLException | NoSuchAlgorithmException ex) {
-            ex.printStackTrace();
-            return false;
-        }
-    }
-
-    // Method to validate email address format
-    public static boolean isValidEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        Pattern pattern = Pattern.compile(emailRegex);
-        Matcher matcher = pattern.matcher(email);
-        return matcher.matches();
-    }
-
-    // Check if the email is already registered
-    public static boolean isEmailRegistered(String email) {
-        return isFieldExists("email", email, USER_TABLE);
-    }
-
-    // Check if the username is already taken
-    public static boolean isUsernameTaken(String username) {
-        return isFieldExists("username", username, USER_TABLE);
-    }
-
-    // Check if a field value exists in a table
-    private static boolean isFieldExists(String fieldName, String value, String tableName) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection
-                        .prepareStatement("SELECT COUNT(*) AS count FROM " + tableName + " WHERE " + fieldName + " = ?")) {
-            statement.setString(1, value);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    int count = resultSet.getInt("count");
-                    return count > 0;
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return false;
-    }
-
-  
-    public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String insertSql = "INSERT INTO " + ENCRYPTED_FILES_TABLE
-                    + " (file_name, encrypted_data, user_id) VALUES (?, ?, ?)";
-            try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
-                insertStatement.setString(1, Paths.get(filePath).getFileName().toString());
-                insertStatement.setBytes(2, encryptedData);
-                insertStatement.setInt(3, userId); // Include user ID
-                insertStatement.executeUpdate();
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-  
-    public static byte[] downloadEncryptedFileFromServer(int fileId, int userId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(
-                        "SELECT encrypted_data FROM encrypted_files WHERE file_id = ? AND user_id = ?")) {
-            statement.setInt(1, fileId);
-            statement.setInt(2, userId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getBytes("encrypted_data");
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        return null;
-    }
-
-   
-    private static boolean verifyPassword(String password, String hashedPassword) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] hashedBytes = md.digest(password.getBytes());
-        String hashedInputPassword = Base64.getEncoder().encodeToString(hashedBytes);
-        return hashedInputPassword.equals(hashedPassword);
-    }
-
-    private static String hashPassword(String password) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] hashedBytes = md.digest(password.getBytes());
-        return Base64.getEncoder().encodeToString(hashedBytes);
-    }
-
     public static boolean doesFileExist(String fileName, int userId) {
-        return isFieldExists("file_name", fileName, ENCRYPTED_FILES_TABLE) && isFieldExists("user_id",
-                String.valueOf(userId), ENCRYPTED_FILES_TABLE);
+        return UserAuthentication.isFieldExists("file_name", fileName, ENCRYPTED_FILES_TABLE)
+                && UserAuthentication.isFieldExists("user_id",
+                        String.valueOf(userId), ENCRYPTED_FILES_TABLE);
     }
 
     // Method to fetch file data from the server
@@ -356,72 +219,6 @@ public class Backend {
         }
     }
 
-    public static Object[][] fetchAllUsersData() {
-        List<User> userList = new ArrayList<>();
-
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement("SELECT id, username, email FROM users");
-                ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String username = resultSet.getString("username");
-                String email = resultSet.getString("email");
-                userList.add(new User(id, username, email));
-            }
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-
-        // Convert the list of users to a two-dimensional array
-        Object[][] userData = new Object[userList.size()][3];
-        for (int i = 0; i < userList.size(); i++) {
-            User user = userList.get(i);
-            userData[i][0] = user.getId();
-            userData[i][1] = user.getUsername();
-            userData[i][2] = user.getEmail();
-        }
-
-        return userData;
-    }
-
-    public static boolean deleteFileFromServer(int fileId, String fileName) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            String deleteSql = "DELETE FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_id = ?";
-            try (PreparedStatement deleteStatement = connection.prepareStatement(deleteSql)) {
-                deleteStatement.setInt(1, fileId);
-                int rowsAffected = deleteStatement.executeUpdate();
-                return rowsAffected > 0;
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
-    }
-
-    public static boolean deleteUser(int userId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            // Delete associated rows in the encrypted_files table
-            String deleteFilesSql = "DELETE FROM encrypted_files WHERE user_id = ?";
-            try (PreparedStatement deleteFilesStatement = connection.prepareStatement(deleteFilesSql)) {
-                deleteFilesStatement.setInt(1, userId);
-                deleteFilesStatement.executeUpdate();
-            }
-
-            // Now delete the user
-            String deleteUserSql = "DELETE FROM users WHERE id = ?";
-            try (PreparedStatement deleteUserStatement = connection.prepareStatement(deleteUserSql)) {
-                deleteUserStatement.setInt(1, userId);
-                int rowsAffected = deleteUserStatement.executeUpdate();
-                return rowsAffected > 0;
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
-    }
-
     // Retrieve sender's email from the user session
     public static String getSenderEmail() {
         return userSession.getEmail();
@@ -433,7 +230,7 @@ public class Backend {
         String token = UUID.randomUUID().toString();
 
         // Encrypt the file before sharing
-        byte[] encryptedFileData = downloadEncryptedFileFromServer(fileId, userId);
+        byte[] encryptedFileData = FileManagement.downloadEncryptedFileFromServer(fileId, userId);
 
         // Save the encrypted file in the download folder
         String downloadFolderPath = "C:/xampp/htdocs/download/"; // Update with your actual download folder path
@@ -470,7 +267,7 @@ public class Backend {
         return baseUrl + token;
     }
 
-    private static final String SENDGRID_API_KEY = "YOUR_API_KEY";
+    private static final String SENDGRID_API_KEY = "Your_api_key";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
@@ -506,6 +303,7 @@ public class Backend {
             System.err.println("Failed to send email.");
         }
     }
+
     // Method to fetch IP address
     public static String getIpAddress() {
         try {

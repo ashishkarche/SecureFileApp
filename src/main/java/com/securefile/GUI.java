@@ -19,6 +19,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
+import FileManager.FileManagement;
+import UserManager.UserAuthentication;
+import UserManager.UserQueries;
+import UserManager.UserSession;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -191,7 +196,7 @@ public class GUI {
 
                 if (userType.equals("User")) {
                     // Perform user login authentication
-                    if (Backend.authenticateUser(username, password, ipAddress)) {
+                    if (UserAuthentication.authenticateUser(username, password, ipAddress)) {
                         // Login successful, show user dashboard
                         createAndShowDashboardGUI(username);
                         loginFrame.setVisible(false);
@@ -239,14 +244,14 @@ public class GUI {
                 String ipAddress = Backend.getIpAddress();
 
                 // Check if the email is already registered
-                if (Backend.isEmailRegistered(email)) {
+                if (UserAuthentication.isEmailRegistered(email)) {
                     JOptionPane.showMessageDialog(registrationFrame, "Email already registered", "Registration Error",
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 // Check if the username is already taken
-                if (Backend.isUsernameTaken(username)) {
+                if (UserAuthentication.isUsernameTaken(username)) {
                     JOptionPane.showMessageDialog(registrationFrame, "Username already taken", "Registration Error",
                             JOptionPane.ERROR_MESSAGE);
                     return;
@@ -260,7 +265,7 @@ public class GUI {
                 }
 
                 // Register the user
-                if (Backend.registerUser(email, username, password,ipAddress)) { // Register user with email
+                if (UserAuthentication.registerUser(email, username, password,ipAddress)) { // Register user with email
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
                     registrationFrame.setVisible(false);
@@ -285,7 +290,7 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String emailAddress = regEmailField.getText();
-                if (Backend.isValidEmail(emailAddress)) {
+                if (UserAuthentication.isValidEmail(emailAddress)) {
                     // Open the SendGrid signup page for email verification
                     try {
                         Desktop.getDesktop().browse(new URI("https://signup.sendgrid.com/"));
@@ -331,7 +336,7 @@ public class GUI {
                         byte[] combinedEncryptedData = Backend.encryptFileData(fileData);
 
                         // Upload the file and encrypted data to the server
-                        Backend.uploadFileToServer(filePath, combinedEncryptedData, userId);
+                        FileManagement.uploadFileToServer(filePath, combinedEncryptedData, userId);
 
                         // Show upload success message
                         JOptionPane.showMessageDialog(fileUploadFrame, "File uploaded successfully!",
@@ -426,7 +431,7 @@ public class GUI {
                     int userId = UserSession.getInstance().getUserId();
 
                     // Download the encrypted file from the server
-                    byte[] encryptedData = Backend.downloadEncryptedFileFromServer(fileId, userId);
+                    byte[] encryptedData = FileManagement.downloadEncryptedFileFromServer(fileId, userId);
 
                     if (encryptedData != null) {
                         try {
@@ -551,7 +556,7 @@ public class GUI {
                 if (selectedRow != -1) {
                     int fileId = (int) fileTable.getValueAt(selectedRow, 0);
                     String fileName = (String) fileTable.getValueAt(selectedRow, 1);
-                    boolean deleted = Backend.deleteFileFromServer(fileId, fileName);
+                    boolean deleted = FileManagement.deleteFileFromServer(fileId, fileName);
                     if (deleted) {
                         // Refresh the table
                         ((FileTableModel) fileTable.getModel()).refreshData();
@@ -628,7 +633,7 @@ public class GUI {
         adminDashboardFrame.add(adminDashboardPanel);
 
         // Fetch users data from the database initially
-        Object[][] userData = Backend.fetchAllUsersData();
+        Object[][] userData = UserQueries.fetchAllUsersData();
         String[] columnNames = { "User ID", "Username", "Email" };
 
         JTable userTable = new JTable(userData, columnNames);
@@ -679,7 +684,7 @@ public class GUI {
     }
 
     private static void deleteUser(JFrame adminDashboardFrame, int userId, JTable userTable, int selectedRow) {
-        boolean deleted = Backend.deleteUser(userId);
+        boolean deleted = UserQueries.deleteUser(userId);
         if (deleted) {
             JOptionPane.showMessageDialog(adminDashboardFrame, "User deleted successfully.");
             // Refresh the table
@@ -693,7 +698,7 @@ public class GUI {
     private static void refreshUserTable(JTable userTable, int selectedRow) {
         DefaultTableModel model = (DefaultTableModel) userTable.getModel();
         model.setRowCount(0); // Clear existing data
-        Object[][] userData = Backend.fetchAllUsersData();
+        Object[][] userData = UserQueries.fetchAllUsersData();
         for (Object[] row : userData) {
             model.addRow(row);
         }
