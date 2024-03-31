@@ -7,8 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -39,7 +37,6 @@ import javax.mail.internet.MimeMessage;
 import DatabaseManager.DatabaseConfig;
 import FileManager.FileDecryptor;
 import FileManager.FileEncryptor;
-import FileManager.FileManagement;
 import UserManager.UserAuthentication;
 import UserManager.UserSession;
 
@@ -144,34 +141,32 @@ public class Backend {
     }
 
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
-        long startTime = System.nanoTime(); // Start time measurement
-        byte[] encryptedDataAES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
-        byte[] encryptedDataDES = FileEncryptor.encrypt(fileData, desSecretKey, "DES");
+
+        byte[] encryptedDataAES = FileEncryptor.encryptAES(fileData, aesSecretKey);
+        byte[] encryptedDataDES = FileEncryptor.encryptDES(fileData, desSecretKey);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(encryptedDataAES);
         outputStream.write(encryptedDataDES);
 
-        long endTime = System.nanoTime(); // End time measurement
-        long elapsedTime = endTime - startTime; // Calculate elapsed time
-        System.out.println("Encryption Time: " + elapsedTime + " nanoseconds");
         return outputStream.toByteArray();
     }
 
     public static byte[] decryptFileData(byte[] encryptedData) throws GeneralSecurityException, IOException {
-        long startTime = System.nanoTime(); // Start time measurement
         int halfLength = encryptedData.length / 2;
         byte[] encryptedDataAES = Arrays.copyOfRange(encryptedData, 0, halfLength);
         byte[] encryptedDataDES = Arrays.copyOfRange(encryptedData, halfLength, encryptedData.length);
-        byte[] decryptedDataAES = FileDecryptor.decrypt(encryptedDataAES, aesSecretKey, "AES");
-        byte[] decryptedDataDES = FileDecryptor.decrypt(encryptedDataDES, desSecretKey, "DES");
+        
+        byte[] decryptedDataAES = FileDecryptor.decryptAES(encryptedDataAES, aesSecretKey);
+        byte[] decryptedDataDES = FileDecryptor.decryptDES(encryptedDataDES, desSecretKey);
+        
+        // Merge decrypted data
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(decryptedDataAES);
         outputStream.write(decryptedDataDES);
-        long endTime = System.nanoTime(); // End time measurement
-        long elapsedTime = endTime - startTime; // Calculate elapsed time
-        System.out.println("Decryption Time: " + elapsedTime + " nanoseconds");
+        
         return outputStream.toByteArray();
     }
+    
 
     public static boolean authenticateAdmin(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -228,30 +223,12 @@ public class Backend {
     public static String generateDownloadLink(String fileName, int fileId, int userId, String linkExpiryTime) {
         // Generate a unique token for the download link
         String token = UUID.randomUUID().toString();
-
-        // Encrypt the file before sharing
-        byte[] encryptedFileData = FileManagement.downloadEncryptedFileFromServer(fileId, userId);
-
-        // Save the encrypted file in the download folder
-        String downloadFolderPath = "C:/xampp/htdocs/download/"; // Update with your actual download folder path
-        String encryptedFileName = fileName.substring(0, fileName.lastIndexOf('.')) + "_encrypted"
-                + fileName.substring(fileName.lastIndexOf('.'));
-        String encryptedFilePath = downloadFolderPath + encryptedFileName;
-
-        try {
-            // Write the encrypted file data to the file
-            Files.write(Paths.get(encryptedFilePath), encryptedFileData);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Save the token, file name, file id, user id, and link expiry time in the
-        // database
+        // Save the token, file name, file id, user id, and link expiry time in the database
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
                 insertStatement.setString(1, token);
-                insertStatement.setString(2, encryptedFileName); // Store the encrypted file name
+                insertStatement.setString(2, fileName); // Store the encrypted file name
                 insertStatement.setInt(3, fileId);
                 insertStatement.setInt(4, userId);
                 insertStatement.setTimestamp(5,
@@ -263,11 +240,11 @@ public class Backend {
         }
 
         // Construct and return the download link
-        String baseUrl = "http://localhost/download/"; // Replace with your actual domain
+        String baseUrl = "https://ashishkarche.github.io/download/"; // Replace with your actual domain
         return baseUrl + token;
     }
 
-    private static final String SENDGRID_API_KEY = "Your_api_key";
+    private static final String SENDGRID_API_KEY = "your_api_key";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
         // Email configuration properties
@@ -304,7 +281,6 @@ public class Backend {
         }
     }
 
-    // Method to fetch IP address
     public static String getIpAddress() {
         try {
             InetAddress localhost = InetAddress.getLocalHost();

@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 import FileManager.FileManagement;
 import UserManager.UserAuthentication;
@@ -26,8 +28,11 @@ import UserManager.UserSession;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.security.GeneralSecurityException;
+import java.util.Timer;
+
 
 public class GUI {
     private static JFrame loginFrame;
@@ -40,18 +45,27 @@ public class GUI {
     private static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
-
+    private static JLabel internetStatusLabel;
     public static String ImagePath = "src/main/resources/plus.png"; // Replace Image Path with your Image path
 
     // Create a flag to track email verification
     public static AtomicBoolean emailVerified = new AtomicBoolean(false);
 
     public static void createAndShowLoginGUI() {
+        
         // Create the main login frame
         loginFrame = new JFrame("Login");
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         loginFrame.setSize(500, 500);
         loginFrame.setLayout(new GridBagLayout());
+
+        // Add InternetStatusIndicator to the header area
+        JRootPane rootPane = loginFrame.getRootPane();
+        JMenuBar menuBar = new JMenuBar();
+        internetStatusLabel = new JLabel("Internet status: Checking...");
+        menuBar.add(Box.createHorizontalGlue()); // Align status indicator to the right
+        menuBar.add(internetStatusLabel);
+        rootPane.setJMenuBar(menuBar);
 
         // Create login components
         JLabel loginLabel = new JLabel("LOGIN");
@@ -265,7 +279,7 @@ public class GUI {
                 }
 
                 // Register the user
-                if (UserAuthentication.registerUser(email, username, password,ipAddress)) { // Register user with email
+                if (UserAuthentication.registerUser(email, username, password, ipAddress)) { // Register user with email
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
                     registrationFrame.setVisible(false);
@@ -378,8 +392,35 @@ public class GUI {
             }
         });
 
+        // Check for network connection status
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                checkNetworkConnection();
+            }
+        }, 0, 10000); // Check every 10 seconds
+
         // Display the login frame
         loginFrame.setVisible(true);
+    }
+
+    private static void checkNetworkConnection() {
+        boolean isConnected = isInternetReachable();
+        if (isConnected) {
+            internetStatusLabel.setText("Internet status: Connected");
+        } else {
+            internetStatusLabel.setText("Internet status: Disconnected");
+        }
+    }
+
+    private static boolean isInternetReachable() {
+        try {
+            InetAddress address = InetAddress.getByName("www.google.com");
+            return address.isReachable(1000); // Timeout set to 1 second
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public static void createAndShowDashboardGUI(String username) {
@@ -688,25 +729,18 @@ public class GUI {
         if (deleted) {
             JOptionPane.showMessageDialog(adminDashboardFrame, "User deleted successfully.");
             // Refresh the table
-            refreshUserTable(userTable, selectedRow);
+            TableModel model = userTable.getModel();
+            if (model instanceof DefaultTableModel) {
+                DefaultTableModel defaultModel = (DefaultTableModel) model;
+                defaultModel.setRowCount(0); // Clear existing data
+                Object[][] userData = UserQueries.fetchAllUsersData();
+                for (Object[] row : userData) {
+                    defaultModel.addRow(row);
+                }
+            }
         } else {
             JOptionPane.showMessageDialog(adminDashboardFrame, "Error deleting user.", "Error",
                     JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private static void refreshUserTable(JTable userTable, int selectedRow) {
-        DefaultTableModel model = (DefaultTableModel) userTable.getModel();
-        model.setRowCount(0); // Clear existing data
-        Object[][] userData = UserQueries.fetchAllUsersData();
-        for (Object[] row : userData) {
-            model.addRow(row);
-        }
-        // Select the next row after deletion
-        if (selectedRow < model.getRowCount()) {
-            userTable.setRowSelectionInterval(selectedRow, selectedRow);
-        } else if (selectedRow > 0) {
-            userTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
         }
     }
 
