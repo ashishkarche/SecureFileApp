@@ -63,6 +63,5 @@ public class UserQueries {
         }
     }
 
-    // Other user-related query methods...
 }
 

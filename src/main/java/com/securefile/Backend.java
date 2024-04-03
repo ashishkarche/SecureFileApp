@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.UUID;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -141,13 +142,11 @@ public class Backend {
     }
 
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
-
-        byte[] encryptedDataAES = FileEncryptor.encryptAES(fileData, aesSecretKey);
-        byte[] encryptedDataDES = FileEncryptor.encryptDES(fileData, desSecretKey);
+        byte[] encryptedDataAES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
+        byte[] encryptedDataDES = FileEncryptor.encrypt(fileData, desSecretKey, "DES");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(encryptedDataAES);
         outputStream.write(encryptedDataDES);
-
         return outputStream.toByteArray();
     }
 
@@ -155,18 +154,13 @@ public class Backend {
         int halfLength = encryptedData.length / 2;
         byte[] encryptedDataAES = Arrays.copyOfRange(encryptedData, 0, halfLength);
         byte[] encryptedDataDES = Arrays.copyOfRange(encryptedData, halfLength, encryptedData.length);
-        
-        byte[] decryptedDataAES = FileDecryptor.decryptAES(encryptedDataAES, aesSecretKey);
-        byte[] decryptedDataDES = FileDecryptor.decryptDES(encryptedDataDES, desSecretKey);
-        
-        // Merge decrypted data
+        byte[] decryptedDataAES = FileDecryptor.decrypt(encryptedDataAES, aesSecretKey, "AES");
+        byte[] decryptedDataDES = FileDecryptor.decrypt(encryptedDataDES, desSecretKey, "DES");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         outputStream.write(decryptedDataAES);
         outputStream.write(decryptedDataDES);
-        
         return outputStream.toByteArray();
     }
-    
 
     public static boolean authenticateAdmin(String username, String password) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -223,7 +217,7 @@ public class Backend {
     public static String generateDownloadLink(String fileName, int fileId, int userId, String linkExpiryTime) {
         // Generate a unique token for the download link
         String token = UUID.randomUUID().toString();
-        // Save the token, file name, file id, user id, and link expiry time in the database
+        // Save the token, file name, file id, user id, and link expiry time in thedatabase
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
@@ -241,12 +235,13 @@ public class Backend {
 
         // Construct and return the download link
         String baseUrl = "https://ashishkarche.github.io/download/"; // Replace with your actual domain
-        return baseUrl + token;
+        return baseUrl;
     }
 
-    private static final String SENDGRID_API_KEY = "your_api_key";
+    private static final String SENDGRID_API_KEY = "Your_API_KEY";
 
-    public static void sendEmail(String receiverEmail, String senderEmail, String message) {
+    public static void sendEmail(String receiverEmail, String senderEmail, String message, String verificationToken) {
+        message += "\n\n To download file enter this token:  " + verificationToken;
         // Email configuration properties
         Properties properties = new Properties();
         properties.put("mail.smtp.host", "smtp.sendgrid.net");
@@ -289,5 +284,15 @@ public class Backend {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static String generateRandomToken() {
+        // Generate a random token logic goes here
+
+        Random random = new Random();
+        int min = 10000; // Minimum 5-digit number
+        int max = 99999; // Maximum 5-digit number
+        int randomNum = random.nextInt(max - min + 1) + min;
+        return String.valueOf(randomNum);
     }
 }
