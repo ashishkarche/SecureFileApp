@@ -112,5 +112,4 @@ public class UserAuthentication {
         return hashedInputPassword.equals(hashedPassword);
     }
 
-    // Other authentication and registration helper methods...
 }

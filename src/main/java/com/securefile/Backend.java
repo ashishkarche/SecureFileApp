@@ -38,6 +38,7 @@ import javax.mail.internet.MimeMessage;
 import DatabaseManager.DatabaseConfig;
 import FileManager.FileDecryptor;
 import FileManager.FileEncryptor;
+import MailserverManager.EmailConfigLoader;
 import UserManager.UserAuthentication;
 import UserManager.UserSession;
 
@@ -187,7 +188,7 @@ public class Backend {
     public static Object[][] fetchFileData(int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT file_id, file_name FROM encrypted_files WHERE user_id = ?")) {
+                        "SELECT file_id, file_name FROM " + ENCRYPTED_FILES_TABLE + " WHERE user_id = ?")) {
             statement.setInt(1, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<Object[]> dataList = new ArrayList<>();
@@ -217,7 +218,8 @@ public class Backend {
     public static String generateDownloadLink(String fileName, int fileId, int userId, String linkExpiryTime) {
         // Generate a unique token for the download link
         String token = UUID.randomUUID().toString();
-        // Save the token, file name, file id, user id, and link expiry time in thedatabase
+        // Save the token, file name, file id, user id, and link expiry time in
+        // thedatabase
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             String insertSql = "INSERT INTO download_links (token, file_name, file_id, user_id, link_expiry_time) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
@@ -234,26 +236,24 @@ public class Backend {
         }
 
         // Construct and return the download link
-        String baseUrl = "https://ashishkarche.github.io/download/"; // Replace with your actual domain
+        String baseUrl = "https://filedownload2003.000webhostapp.com/"; // Replace with your actual domain
         return baseUrl;
     }
-
-    private static final String SENDGRID_API_KEY = "Your_API_KEY";
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message, String verificationToken) {
         message += "\n\n To download file enter this token:  " + verificationToken;
         // Email configuration properties
         Properties properties = new Properties();
-        properties.put("mail.smtp.host", "smtp.sendgrid.net");
-        properties.put("mail.smtp.port", "587");
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
+        properties.put("mail.smtp.host", EmailConfigLoader.getSmtpHost());
+        properties.put("mail.smtp.port", EmailConfigLoader.getSmtpPort());
+        properties.put("mail.smtp.auth", EmailConfigLoader.getSmtpAuth());
+        properties.put("mail.smtp.starttls.enable", EmailConfigLoader.getSmtpStartTls());
 
         // Create a session with authentication
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("apikey", SENDGRID_API_KEY);
+                return new PasswordAuthentication("apikey", EmailConfigLoader.getSmtpApiKey());
             }
         });
 

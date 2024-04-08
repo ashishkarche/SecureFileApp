@@ -399,7 +399,7 @@ public class GUI {
             public void run() {
                 checkNetworkConnection();
             }
-        }, 0, 10000); // Check every 10 seconds
+        }, 0, 1000); // Check every 1 seconds
 
         // Display the login frame
         loginFrame.setVisible(true);
