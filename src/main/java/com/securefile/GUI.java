@@ -531,8 +531,6 @@ public class GUI {
                     // Set the expiry time for the download link (in minutes)
                     String linkExpiryTime = "60"; // Change this as needed
 
-                    String verificationToken = Backend.generateRandomToken();
-
                     // Prompt the user to enter the receiver's email address
                     String receiverEmail = JOptionPane.showInputDialog(dashboardFrame, "Enter receiver's email:");
 
@@ -542,7 +540,7 @@ public class GUI {
 
                         // Send an email to the receiver with the download link
                         Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),
-                                "Download file from: " + downloadLink,verificationToken);
+                                "Download file from: " + downloadLink);
 
                         // Show a confirmation message to the user
                         JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,

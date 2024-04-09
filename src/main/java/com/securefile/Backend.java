@@ -236,12 +236,12 @@ public class Backend {
         }
 
         // Construct and return the download link
-        String baseUrl = "https://filedownload2003.000webhostapp.com/"; // Replace with your actual domain
+        String baseUrl = "https://filedownload2003.000webhostapp.com/download.php?token=" + token; // Replace with your actual domain
         return baseUrl;
     }
 
-    public static void sendEmail(String receiverEmail, String senderEmail, String message, String verificationToken) {
-        message += "\n\n To download file enter this token:  " + verificationToken;
+    public static void sendEmail(String receiverEmail, String senderEmail, String message) {
+        message += "\n To download file click above link  ";
         // Email configuration properties
         Properties properties = new Properties();
         properties.put("mail.smtp.host", EmailConfigLoader.getSmtpHost());
