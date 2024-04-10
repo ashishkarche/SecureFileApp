@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
 import java.util.UUID;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -51,6 +50,7 @@ public class Backend {
     // Table Names
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
     private static final String KEY_TABLE = "keys";
+    private static final String UPLOADED_FILES_TABLE = "uploaded_files"; // New table
 
     // Encryption Keys
     private static SecretKey aesSecretKey;
@@ -140,6 +140,41 @@ public class Backend {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // Store uploaded file in the database
+    public static void storeUploadedFile(String fileName, byte[] fileData, int fileId) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection
+                        .prepareStatement(
+                                "INSERT INTO `" + UPLOADED_FILES_TABLE
+                                        + "` (file_id,file_name, file_data) VALUES (?, ?, ?)")) {
+            statement.setInt(1, fileId);
+            statement.setString(2, fileName);
+            statement.setBytes(3, fileData);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to obtain the file ID from the encrypted_files table
+    public static int obtainFileId(String fileName, int userId) {
+        int fileId = -1; // Default value indicating failure
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement(
+                        "SELECT file_id FROM encrypted_files WHERE file_name = ? AND user_id = ?");) {
+            statement.setString(1, fileName);
+            statement.setInt(2, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    fileId = resultSet.getInt("file_id");
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return fileId;
     }
 
     public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
@@ -236,12 +271,13 @@ public class Backend {
         }
 
         // Construct and return the download link
-        String baseUrl = "https://filedownload2003.000webhostapp.com/download.php?token=" + token; // Replace with your actual domain
+        String baseUrl = "https://filedownload2003.000webhostapp.com/download.php?token=" + token; // Replace with your
+                                                                                                   // actual domain
         return baseUrl;
     }
 
     public static void sendEmail(String receiverEmail, String senderEmail, String message) {
-        message += "\n To download file click above link  ";
+        message += "\n To download file click above link. \n This link will be expire after some time. ";
         // Email configuration properties
         Properties properties = new Properties();
         properties.put("mail.smtp.host", EmailConfigLoader.getSmtpHost());
@@ -268,8 +304,8 @@ public class Backend {
             // Send the email
             Transport.send(mimeMessage);
 
-            System.out.println("Email sent to: " + receiverEmail);
-            System.out.println("Message: " + message);
+            System.out.println(receiverEmail);
+            System.out.println(message);
         } catch (MessagingException e) {
             e.printStackTrace();
             System.err.println("Failed to send email.");
@@ -284,15 +320,5 @@ public class Backend {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public static String generateRandomToken() {
-        // Generate a random token logic goes here
-
-        Random random = new Random();
-        int min = 10000; // Minimum 5-digit number
-        int max = 99999; // Maximum 5-digit number
-        int randomNum = random.nextInt(max - min + 1) + min;
-        return String.valueOf(randomNum);
     }
 }

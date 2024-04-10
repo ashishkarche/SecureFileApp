@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.security.GeneralSecurityException;
 import java.util.Timer;
 
-
 public class GUI {
     private static JFrame loginFrame;
     private static JTextField usernameField;
@@ -52,7 +51,7 @@ public class GUI {
     public static AtomicBoolean emailVerified = new AtomicBoolean(false);
 
     public static void createAndShowLoginGUI() {
-        
+
         // Create the main login frame
         loginFrame = new JFrame("Login");
         loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -351,6 +350,12 @@ public class GUI {
 
                         // Upload the file and encrypted data to the server
                         FileManagement.uploadFileToServer(filePath, combinedEncryptedData, userId);
+
+                        // Obtain the fileId somehow
+                        int fileId = Backend.obtainFileId(selectedFile.getName(), userId); // Replace obtainFileId() with the actual method to get fileId
+
+                        // Store the uploaded file in the database
+                        Backend.storeUploadedFile(selectedFile.getName(), fileData, fileId);
 
                         // Show upload success message
                         JOptionPane.showMessageDialog(fileUploadFrame, "File uploaded successfully!",
