@@ -304,8 +304,6 @@ public class Backend {
             // Send the email
             Transport.send(mimeMessage);
 
-            System.out.println(receiverEmail);
-            System.out.println(message);
         } catch (MessagingException e) {
             e.printStackTrace();
             System.err.println("Failed to send email.");

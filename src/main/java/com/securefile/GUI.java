@@ -544,8 +544,7 @@ public class GUI {
                         String downloadLink = Backend.generateDownloadLink(fileName, fileId, userId, linkExpiryTime);
 
                         // Send an email to the receiver with the download link
-                        Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),
-                                "Download file from: " + downloadLink);
+                        Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),downloadLink);
 
                         // Show a confirmation message to the user
                         JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,
