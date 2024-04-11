@@ -22,6 +22,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 import FileManager.FileManagement;
+import MailserverManager.EmailConfigLoader;
 import UserManager.UserAuthentication;
 import UserManager.UserQueries;
 import UserManager.UserSession;
@@ -544,7 +545,7 @@ public class GUI {
                         String downloadLink = Backend.generateDownloadLink(fileName, fileId, userId, linkExpiryTime);
 
                         // Send an email to the receiver with the download link
-                        Backend.sendEmail(receiverEmail, UserSession.getInstance().getEmail(),downloadLink);
+                        Backend.sendEmail(receiverEmail, EmailConfigLoader.getSmtpUsername(),downloadLink);
 
                         // Show a confirmation message to the user
                         JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,

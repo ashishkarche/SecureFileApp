@@ -34,6 +34,10 @@ public class EmailConfigLoader {
     public static String getSmtpStartTls() {
         return emailProps.getProperty("mail.smtp.starttls.enable");
     }
+    
+    public static String getSmtpUsername() {
+        return emailProps.getProperty("mail.smtp.username");
+    }
 
     public static String getSmtpApiKey() {
         return emailProps.getProperty("mail.smtp.apikey");
