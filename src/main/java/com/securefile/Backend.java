@@ -310,6 +310,69 @@ public class Backend {
         }
     }
 
+    
+    public static void sendVerificationEmail(String receiverEmail, int verificationCode) {
+        String subject = "Email Verification Code";
+        String message = "Your verification code is: " + verificationCode;
+
+        // Email configuration properties
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", EmailConfigLoader.getSmtpHost());
+        properties.put("mail.smtp.port", EmailConfigLoader.getSmtpPort());
+        properties.put("mail.smtp.auth", EmailConfigLoader.getSmtpAuth());
+        properties.put("mail.smtp.starttls.enable", EmailConfigLoader.getSmtpStartTls());
+
+        // Create a session with authentication
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication("apikey", EmailConfigLoader.getSmtpApiKey());
+            }
+        });
+
+        try {
+            // Create a MimeMessage object
+            Message mimeMessage = new MimeMessage(session);
+            mimeMessage.setFrom(new InternetAddress(EmailConfigLoader.getSmtpUsername()));
+            mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(receiverEmail));
+            mimeMessage.setSubject(subject);
+            mimeMessage.setText(message);
+
+            // Send the email
+            Transport.send(mimeMessage);
+
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.err.println("Failed to send email.");
+        }
+    }
+    // Method to update password in the database
+    public static boolean updatePasswordInDatabase(String emailAddress, String newPassword) {
+        try {
+            // Establish a connection to the database
+            Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+
+            // Prepare the SQL statement
+            String sql = "UPDATE users SET password = ? WHERE email = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, newPassword);
+            statement.setString(2, emailAddress);
+
+            // Execute the update
+            int rowsUpdated = statement.executeUpdate();
+
+            // Close the resources
+            statement.close();
+            connection.close();
+
+            // Check if the password was updated successfully
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false in case of any exception
+        }
+    }
+
     public static String getIpAddress() {
         try {
             InetAddress localhost = InetAddress.getLocalHost();

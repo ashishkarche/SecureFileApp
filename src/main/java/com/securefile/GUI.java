@@ -11,8 +11,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -29,6 +27,7 @@ import UserManager.UserSession;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.security.GeneralSecurityException;
@@ -110,6 +109,12 @@ public class GUI {
         loginFrame.add(loginButton, c);
         c.gridy = 5;
         loginFrame.add(registerButton, c);
+        JButton forgetPasswordButton = new JButton("Forgot Password"); // Define forgetPasswordButton
+        c.insets = new Insets(10, 10, 10, 10);
+        c.gridwidth = 2;
+        c.gridx = 0;
+        c.gridy = 6; // Adjust the gridy position according to your layout
+        loginFrame.add(forgetPasswordButton, c);
 
         // Create the registration frame
         registrationFrame = new JFrame("Registration");
@@ -305,18 +310,9 @@ public class GUI {
             public void actionPerformed(ActionEvent e) {
                 String emailAddress = regEmailField.getText();
                 if (UserAuthentication.isValidEmail(emailAddress)) {
-                    // Open the SendGrid signup page for email verification
-                    try {
-                        Desktop.getDesktop().browse(new URI("https://signup.sendgrid.com/"));
-                        // Set email verification flag to true
-                        emailVerified.set(true);
-                        // Enable the register button
-                        regRegisterButton.setEnabled(true);
-                    } catch (IOException | URISyntaxException ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(registrationFrame, "Error opening browser.", "Error",
-                                JOptionPane.ERROR_MESSAGE);
-                    }
+                    int verificationCode = generateVerificationCode();
+                    Backend.sendVerificationEmail(emailAddress, verificationCode);
+                    enterVerificationCode(verificationCode, regRegisterButton);
                 } else {
                     JOptionPane.showMessageDialog(registrationFrame, "Invalid email address.", "Error",
                             JOptionPane.ERROR_MESSAGE);
@@ -353,7 +349,9 @@ public class GUI {
                         FileManagement.uploadFileToServer(filePath, combinedEncryptedData, userId);
 
                         // Obtain the fileId somehow
-                        int fileId = Backend.obtainFileId(selectedFile.getName(), userId); // Replace obtainFileId() with the actual method to get fileId
+                        int fileId = Backend.obtainFileId(selectedFile.getName(), userId); // Replace obtainFileId()
+                                                                                           // with the actual method to
+                                                                                           // get fileId
 
                         // Store the uploaded file in the database
                         Backend.storeUploadedFile(selectedFile.getName(), fileData, fileId);
@@ -409,6 +407,43 @@ public class GUI {
 
         // Display the login frame
         loginFrame.setVisible(true);
+    }
+
+    private static int generateVerificationCode() {
+        Random random = new Random();
+        return random.nextInt(90000) + 10000; // Generate a random 5-digit code
+    }
+
+    private static void enterVerificationCode(int verificationCode, JButton regRegisterButton) {
+        JFrame verificationFrame = new JFrame("Enter Verification Code");
+        JTextField verificationTextField = new JTextField(10);
+        JButton verifyButton = new JButton("Verify");
+
+        verifyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String enteredCode = verificationTextField.getText();
+                if (enteredCode.equals(String.valueOf(verificationCode))) {
+                    JOptionPane.showMessageDialog(verificationFrame, "Email verified successfully!", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    emailVerified.set(true);
+                    regRegisterButton.setEnabled(true);
+                    verificationFrame.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(verificationFrame, "Invalid verification code. Please try again.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("Enter Verification Code: "));
+        panel.add(verificationTextField);
+        panel.add(verifyButton);
+
+        verificationFrame.add(panel);
+        verificationFrame.setSize(300, 150);
+        verificationFrame.setVisible(true);
     }
 
     private static void checkNetworkConnection() {
@@ -545,7 +580,7 @@ public class GUI {
                         String downloadLink = Backend.generateDownloadLink(fileName, fileId, userId, linkExpiryTime);
 
                         // Send an email to the receiver with the download link
-                        Backend.sendEmail(receiverEmail, EmailConfigLoader.getSmtpUsername(),downloadLink);
+                        Backend.sendEmail(receiverEmail, EmailConfigLoader.getSmtpUsername(), downloadLink);
 
                         // Show a confirmation message to the user
                         JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,
