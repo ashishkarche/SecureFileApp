@@ -15,18 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 
 import FileManager.FileManagement;
-import MailserverManager.EmailConfigLoader;
 import UserManager.UserAuthentication;
-import UserManager.UserQueries;
 import UserManager.UserSession;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,14 +27,14 @@ import java.security.GeneralSecurityException;
 import java.util.Timer;
 
 public class GUI {
-    private static JFrame loginFrame;
-    private static JTextField usernameField;
-    private static JPasswordField passwordField;
+    public static JFrame loginFrame;
+    public static JTextField usernameField;
+    public static JPasswordField passwordField;
     private static JFrame registrationFrame;
     private static JTextField regEmailField;
     private static JTextField regUsernameField;
     private static JPasswordField regPasswordField;
-    private static JFrame fileUploadFrame;
+    public static JFrame fileUploadFrame;
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
     private static JLabel internetStatusLabel;
@@ -178,6 +171,7 @@ public class GUI {
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
+        JButton backButton1 = new JButton("Back to Dashboard");
 
         c.insets = new Insets(10, 10, 20, 10);
         c.gridwidth = 2;
@@ -194,6 +188,8 @@ public class GUI {
         c.gridy = 2;
         c.anchor = GridBagConstraints.CENTER;
         fileUploadFrame.add(encryptButton, c);
+        c.gridy = 3; // Adjust the gridy position according to your layout
+        fileUploadFrame.add(backButton1, c);
 
         // Initially, hide the frames
         registrationFrame.setVisible(false);
@@ -217,7 +213,7 @@ public class GUI {
                     // Perform user login authentication
                     if (UserAuthentication.authenticateUser(username, password, ipAddress)) {
                         // Login successful, show user dashboard
-                        createAndShowDashboardGUI(username);
+                        userDashboard.createAndShowDashboardGUI(username);
                         loginFrame.setVisible(false);
                     } else {
                         JOptionPane.showMessageDialog(loginFrame, "Invalid username or password", "Login Error",
@@ -227,7 +223,7 @@ public class GUI {
                     // Perform admin login authentication
                     if (Backend.authenticateAdmin(username, password)) {
                         // Admin login successful, show admin dashboard
-                        createAndShowAdminDashboardGUI();
+                        adminDashboard.createAndShowAdminDashboardGUI();
                         loginFrame.setVisible(false);
                     } else {
                         JOptionPane.showMessageDialog(loginFrame, "Invalid admin credentials", "Login Error",
@@ -304,6 +300,14 @@ public class GUI {
             }
         });
 
+        backButton1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fileUploadFrame.setVisible(false);
+                userDashboard.showDashboard(); // Show the user dashboard
+            }
+        });
+
         // Action listener for email verification button
         emailVerifyButton.addActionListener(new ActionListener() {
             @Override
@@ -364,7 +368,7 @@ public class GUI {
                         fileUploadFrame.dispose();
 
                         // Show the dashboard
-                        createAndShowDashboardGUI(UserSession.getInstance().getUsername());
+                        userDashboard.createAndShowDashboardGUI(UserSession.getInstance().getUsername());
 
                     } catch (IOException | GeneralSecurityException ex) {
                         ex.printStackTrace();
@@ -461,326 +465,6 @@ public class GUI {
             return address.isReachable(1000); // Timeout set to 1 second
         } catch (IOException e) {
             return false;
-        }
-    }
-
-    public static void createAndShowDashboardGUI(String username) {
-        JFrame dashboardFrame = new JFrame("Dashboard - " + username);
-        dashboardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        dashboardFrame.setSize(800, 600);
-
-        JPanel dashboardPanel = new JPanel(new BorderLayout());
-        dashboardFrame.add(dashboardPanel);
-
-        // Add the plus.png icon in the right-hand corner
-        ImageIcon plusIcon = new ImageIcon(ImagePath);
-        Image smallPlusImage = plusIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
-        ImageIcon smallPlusIcon = new ImageIcon(smallPlusImage);
-        JLabel plusLabel = new JLabel(smallPlusIcon);
-        plusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        dashboardPanel.add(plusLabel, BorderLayout.NORTH);
-
-        JTable fileTable = new JTable(new FileTableModel());
-        dashboardPanel.add(new JScrollPane(fileTable), BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        JButton shareButton = new JButton("Share");
-        buttonPanel.add(shareButton);
-
-        JButton downloadButton = new JButton("Download");
-        buttonPanel.add(downloadButton);
-
-        JButton deleteButton = new JButton("Delete");
-        buttonPanel.add(deleteButton);
-        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Add logout button in the bottom right corner
-        JButton logoutButton = new JButton("Logout");
-        buttonPanel.add(logoutButton);
-        dashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        dashboardFrame.setVisible(true);
-
-        downloadButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = fileTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
-                    // Get the user ID from the session
-                    int userId = UserSession.getInstance().getUserId();
-
-                    // Download the encrypted file from the server
-                    byte[] encryptedData = FileManagement.downloadEncryptedFileFromServer(fileId, userId);
-
-                    if (encryptedData != null) {
-                        try {
-                            // Decrypt the encrypted data
-                            byte[] decryptedData = Backend.decryptFileData(encryptedData);
-
-                            // Choose a location to save the decrypted file
-                            JFileChooser fileChooser = new JFileChooser();
-                            fileChooser.setDialogTitle("Save File");
-                            int userSelection = fileChooser.showSaveDialog(null);
-
-                            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                                File decryptedFile = fileChooser.getSelectedFile();
-
-                                // Write the decrypted data to the selected file
-                                Files.write(decryptedFile.toPath(), decryptedData);
-
-                                JOptionPane.showMessageDialog(dashboardFrame,
-                                        "File Saved: " + decryptedFile.getAbsolutePath(),
-                                        "Download Successful", JOptionPane.INFORMATION_MESSAGE);
-                            } else {
-                                JOptionPane.showMessageDialog(dashboardFrame, "Download canceled or file not saved.",
-                                        "Download Canceled", JOptionPane.WARNING_MESSAGE);
-                            }
-                        } catch (GeneralSecurityException | IOException ex) {
-                            ex.printStackTrace();
-                            JOptionPane.showMessageDialog(dashboardFrame,
-                                    "Error during decryption or file saving.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    } else {
-                        JOptionPane.showMessageDialog(dashboardFrame, "Error: Unable to download the encrypted file.",
-                                "Download Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to download.",
-                            "No File Selected",
-                            JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
-
-        shareButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Get the selected row in the table
-                int selectedRow = fileTable.getSelectedRow();
-                if (selectedRow != -1) {
-
-                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
-                    // Retrieve the file name from the selected row
-                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
-
-                    // Get the current user's ID
-                    int userId = UserSession.getInstance().getUserId();
-
-                    // Set the expiry time for the download link (in minutes)
-                    String linkExpiryTime = "60"; // Change this as needed
-
-                    // Prompt the user to enter the receiver's email address
-                    String receiverEmail = JOptionPane.showInputDialog(dashboardFrame, "Enter receiver's email:");
-
-                    if (receiverEmail != null && !receiverEmail.isEmpty()) {
-                        // Generate the download link for the file
-                        String downloadLink = Backend.generateDownloadLink(fileName, fileId, userId, linkExpiryTime);
-
-                        // Send an email to the receiver with the download link
-                        Backend.sendEmail(receiverEmail, EmailConfigLoader.getSmtpUsername(), downloadLink);
-
-                        // Show a confirmation message to the user
-                        JOptionPane.showMessageDialog(dashboardFrame, "Email sent to " + receiverEmail,
-                                "Email Sent", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        // If the user cancels or leaves the email field empty
-                        JOptionPane.showMessageDialog(dashboardFrame, "Receiver's email is required",
-                                "Email Required", JOptionPane.WARNING_MESSAGE);
-                    }
-                } else {
-                    // If no file is selected
-                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to share.",
-                            "No File Selected", JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
-
-        plusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                fileUploadFrame.setVisible(true);
-                dashboardFrame.setVisible(false);
-            }
-        });
-
-        // The window listener to the `fileUploadFrame` in Java Swing. When the
-        // window is closing, it will make the `dashboardFrame` visible.
-        fileUploadFrame.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                dashboardFrame.setVisible(true);
-            }
-        });
-
-        logoutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Logout the user
-                UserSession.getInstance().logoutUser();
-
-                clearLoginFields();
-
-                // Close file upload frame
-                dashboardFrame.dispose();
-
-                // Show login frame
-                loginFrame.setVisible(true);
-            }
-        });
-
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = fileTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    int fileId = (int) fileTable.getValueAt(selectedRow, 0);
-                    String fileName = (String) fileTable.getValueAt(selectedRow, 1);
-                    boolean deleted = FileManagement.deleteFileFromServer(fileId, fileName);
-                    if (deleted) {
-                        // Refresh the table
-                        ((FileTableModel) fileTable.getModel()).refreshData();
-                        JOptionPane.showMessageDialog(dashboardFrame, "File deleted successfully.");
-                    } else {
-                        JOptionPane.showMessageDialog(dashboardFrame, "Error deleting file.", "Error",
-                                JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(dashboardFrame, "Please select a file to delete.", "Warning",
-                            JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
-
-    }
-
-    private static class FileTableModel extends AbstractTableModel {
-        private String[] columnNames = { "File No.", "File Name" };
-        private List<Object[]> data;
-        // Get the current user ID from the session
-        int userId = UserSession.getInstance().getUserId();
-
-        public FileTableModel() {
-            this.data = fetchData();
-        }
-
-        private List<Object[]> fetchData() {
-            Object[][] fetchedData = Backend.fetchFileData(userId);
-            List<Object[]> dataList = new ArrayList<>();
-            for (Object[] row : fetchedData) {
-                dataList.add(row);
-            }
-            return dataList;
-        }
-
-        public void refreshData() {
-            this.data = fetchData();
-            fireTableDataChanged();
-        }
-
-        @Override
-        public int getRowCount() {
-            return data.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            return data.get(rowIndex)[columnIndex];
-        }
-    }
-
-    private static void clearLoginFields() {
-        usernameField.setText("");
-        passwordField.setText("");
-    }
-
-    public static void createAndShowAdminDashboardGUI() {
-        JFrame adminDashboardFrame = new JFrame("Admin Dashboard");
-        adminDashboardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        adminDashboardFrame.setSize(800, 600);
-
-        JPanel adminDashboardPanel = new JPanel(new BorderLayout());
-        adminDashboardFrame.add(adminDashboardPanel);
-
-        // Fetch users data from the database initially
-        Object[][] userData = UserQueries.fetchAllUsersData();
-        String[] columnNames = { "User ID", "Username", "Email" };
-
-        JTable userTable = new JTable(userData, columnNames);
-        JScrollPane scrollPane = new JScrollPane(userTable);
-        adminDashboardPanel.add(scrollPane, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton deleteUserButton = new JButton("Delete User");
-        buttonPanel.add(deleteUserButton);
-        adminDashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Add logout button in the bottom right corner
-        JButton logoutButton = new JButton("Logout");
-        buttonPanel.add(logoutButton);
-        adminDashboardPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        deleteUserButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = userTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    int userId = (int) userTable.getValueAt(selectedRow, 0);
-                    deleteUser(adminDashboardFrame, userId, userTable, selectedRow);
-                } else {
-                    JOptionPane.showMessageDialog(adminDashboardFrame, "Please select a user to delete.",
-                            "Warning", JOptionPane.WARNING_MESSAGE);
-                }
-            }
-        });
-
-        logoutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Logout the user
-                UserSession.getInstance().logoutUser();
-
-                clearLoginFields();
-
-                // Close file upload frame
-                adminDashboardFrame.dispose();
-
-                // Show login frame
-                loginFrame.setVisible(true);
-            }
-        });
-
-        adminDashboardFrame.setVisible(true);
-    }
-
-    private static void deleteUser(JFrame adminDashboardFrame, int userId, JTable userTable, int selectedRow) {
-        boolean deleted = UserQueries.deleteUser(userId);
-        if (deleted) {
-            JOptionPane.showMessageDialog(adminDashboardFrame, "User deleted successfully.");
-            // Refresh the table
-            TableModel model = userTable.getModel();
-            if (model instanceof DefaultTableModel) {
-                DefaultTableModel defaultModel = (DefaultTableModel) model;
-                defaultModel.setRowCount(0); // Clear existing data
-                Object[][] userData = UserQueries.fetchAllUsersData();
-                for (Object[] row : userData) {
-                    defaultModel.addRow(row);
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(adminDashboardFrame, "Error deleting user.", "Error",
-                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
