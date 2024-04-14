@@ -292,6 +292,43 @@ public class GUI {
             }
         });
 
+        // Add action listener for the Forgot Password button
+        forgetPasswordButton.addActionListener(e -> {
+            // Prompt user to enter their email
+            String email = JOptionPane.showInputDialog(loginFrame, "Enter your email:", "Forgot Password",
+                    JOptionPane.PLAIN_MESSAGE);
+            if (email != null && !email.isEmpty()) {
+                // Check if email exists in the database
+                if (Backend.emailExists(email)) {
+                    // Send verification code to the email
+                    String verificationCode = Backend.sendVerificationCode(email);
+                    // Prompt for the verification code
+                    String inputCode = JOptionPane.showInputDialog(loginFrame,
+                            "Enter the verification code sent to your email:", "Verify Email",
+                            JOptionPane.PLAIN_MESSAGE);
+                    if (verificationCode.equals(inputCode)) {
+                        // Prompt to enter new password
+                        String newPassword = JOptionPane.showInputDialog(loginFrame, "Enter your new password:",
+                                "Reset Password", JOptionPane.PLAIN_MESSAGE);
+                        if (newPassword != null && !newPassword.isEmpty()) {
+                            // Update the password in the database
+                            Backend.updatePassword(email, newPassword);
+                            JOptionPane.showMessageDialog(loginFrame,
+                                    "Password has been reset successfully. Please login again.", "Password Reset",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            // Now show the login frame again
+                            loginFrame.setVisible(true);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(loginFrame, "Invalid verification code.", "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(loginFrame, "Email not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

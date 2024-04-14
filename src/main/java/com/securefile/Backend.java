@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -20,8 +21,10 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 import java.util.UUID;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -50,7 +53,8 @@ public class Backend {
     // Table Names
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
     private static final String KEY_TABLE = "keys";
-    private static final String UPLOADED_FILES_TABLE = "uploaded_files"; // New table
+    private static final String UPLOADED_FILES_TABLE = "uploaded_files"; 
+    private static final String USER_TABLE = "users";
 
     // Encryption Keys
     private static SecretKey aesSecretKey;
@@ -163,7 +167,7 @@ public class Backend {
         int fileId = -1; // Default value indicating failure
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT file_id FROM encrypted_files WHERE file_name = ? AND user_id = ?");) {
+                        "SELECT file_id FROM "+ ENCRYPTED_FILES_TABLE+" WHERE file_name = ? AND user_id = ?");) {
             statement.setString(1, fileName);
             statement.setInt(2, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -310,7 +314,6 @@ public class Backend {
         }
     }
 
-    
     public static void sendVerificationEmail(String receiverEmail, int verificationCode) {
         String subject = "Email Verification Code";
         String message = "Your verification code is: " + verificationCode;
@@ -346,32 +349,6 @@ public class Backend {
             System.err.println("Failed to send email.");
         }
     }
-    // Method to update password in the database
-    public static boolean updatePasswordInDatabase(String emailAddress, String newPassword) {
-        try {
-            // Establish a connection to the database
-            Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-
-            // Prepare the SQL statement
-            String sql = "UPDATE users SET password = ? WHERE email = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, newPassword);
-            statement.setString(2, emailAddress);
-
-            // Execute the update
-            int rowsUpdated = statement.executeUpdate();
-
-            // Close the resources
-            statement.close();
-            connection.close();
-
-            // Check if the password was updated successfully
-            return rowsUpdated > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Return false in case of any exception
-        }
-    }
 
     public static String getIpAddress() {
         try {
@@ -381,5 +358,110 @@ public class Backend {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static boolean emailExists(String email) {
+        // SQL query to check the existence of an email
+        String query = "SELECT COUNT(email) FROM "+USER_TABLE+" WHERE email = ?";
+
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, email); // Set the email parameter in the SQL query
+            ResultSet resultSet = statement.executeQuery(); // Execute the query
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1) > 0; // Return true if the count is greater than 0
+            }
+        } catch (SQLException e) {
+            handleException(e); // Handle any SQL exceptions
+        }
+        return false; // Return false if no email is found or in case of an exception
+    }
+
+    public static String sendVerificationCode(String email) {
+        // Generate a 5-digit code
+        String code = generateCode();
+        // Send email (implement using JavaMail or similar)
+        sendEmailWithCode(email, code);
+        return code;
+    }
+
+    public static void updatePassword(String email, String newPassword) {
+        // Hash the new password
+        String hashedPassword;
+        try {
+            hashedPassword = hashPassword(newPassword);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Failed to hash password: " + e.getMessage());
+            return; // Exit the method if hashing fails
+        }
+
+        // SQL update statement to update the user's password
+        String query = "UPDATE users SET password = ? WHERE email = ?";
+
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, hashedPassword); // Set the hashed password parameter
+            statement.setString(2, email); // Set the email parameter
+            int updatedRows = statement.executeUpdate(); // Execute the update statement
+
+            // Check if the update was successful
+            if (updatedRows > 0) {
+                System.out.println("Password updated successfully.");
+            } else {
+                System.out.println("No user found with the provided email.");
+            }
+        } catch (SQLException e) {
+            handleException(e); // Handle any SQL exceptions
+        }
+    }
+
+    private static String hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hashedBytes = md.digest(password.getBytes());
+        return Base64.getEncoder().encodeToString(hashedBytes);
+    }
+
+    public static void sendEmailWithCode(String email, String code) {
+        String subject = "Verification Code";
+        String message = "Your verification code is: " + code;
+
+        // Email configuration properties
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", EmailConfigLoader.getSmtpHost());
+        properties.put("mail.smtp.port", EmailConfigLoader.getSmtpPort());
+        properties.put("mail.smtp.auth", EmailConfigLoader.getSmtpAuth());
+        properties.put("mail.smtp.starttls.enable", EmailConfigLoader.getSmtpStartTls());
+
+        // Create a session with authentication
+        Session session = Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication("apikey",EmailConfigLoader.getSmtpApiKey());
+            }
+        });
+
+        try {
+            // Create a MimeMessage object
+            Message mimeMessage = new MimeMessage(session);
+            mimeMessage.setFrom(new InternetAddress(EmailConfigLoader.getSmtpUsername()));
+            mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(email));
+            mimeMessage.setSubject(subject);
+            mimeMessage.setText(message);
+
+            // Send the email
+            Transport.send(mimeMessage);
+            System.out.println("Email sent successfully to: " + email);
+
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.err.println("Failed to send email to: " + email);
+        }
+    }
+
+    private static String generateCode() {
+        return String.valueOf(new Random().nextInt(89999) + 10000); // Generates a 5-digit random number
     }
 }

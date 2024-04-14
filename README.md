@@ -43,7 +43,7 @@ Encrypted data can be stored safely or transferred to a third party for analysis
 
 ##### Step 3 -
 
-just import downloaded database to xampp server, link is given ![Download Database](./filedatabase.sql).
+just import downloaded database to cloud server, link is given ![Download Database](./filedatabase.sql).
 
 ##### Step 4 -
 
