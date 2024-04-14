@@ -425,7 +425,7 @@ public class Backend {
     }
 
     public static void sendEmailWithCode(String email, String code) {
-        String subject = "Verification Code";
+        String subject = "Password Verification Code";
         String message = "Your verification code is: " + code;
 
         // Email configuration properties
