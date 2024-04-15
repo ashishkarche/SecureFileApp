@@ -38,7 +38,7 @@ public class GUI {
     private static JLabel uploadLabel;
     private static JLabel passwordLengthLabel;
     private static JLabel internetStatusLabel;
-    public static String ImagePath = "src/main/resources/plus.png"; // Replace Image Path with your Image path
+    public static String ImagePath = "src/main/java/plus.png"; // Replace Image Path with your Image path
 
     // Create a flag to track email verification
     public static AtomicBoolean emailVerified = new AtomicBoolean(false);

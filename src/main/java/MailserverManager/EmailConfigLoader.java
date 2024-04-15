@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class EmailConfigLoader {
-    private static final String PROPERTIES_FILE = "src/main/resources/Properties/email.properties";
+    private static final String PROPERTIES_FILE = "src/main/java/Properties/email.properties";
     private static final Properties emailProps = new Properties();
 
     static {

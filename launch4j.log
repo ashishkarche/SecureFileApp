@@ -1,0 +1,90 @@
+
+
+Version:	3.50
+CmdLine:	C:\Users\ashis\OneDrive\Documents\Project\app.exe --l4j-debug
+JNI:		No
+WOW64:		Yes
+Working dir:	C:\Users\ashis\OneDrive\Documents\Project\.
+Requires JDK:	Yes
+Requires 64-Bit: No
+Java min ver:	1.008.000
+Java max ver:	
+Substitute:	JAVA_HOME = 
+Substitute:	PATH = C:\Program Files\Common Files\Oracle\Java\javapath;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\MinGW\bin;C:\TDM-GCC-32\bin;C:\TDM-GCC-64\bin;C:\Program Files\Java\jdk-18.0.1.1\bin;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\mongosh-1.6.0\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\apache-maven\apache-maven-3.9.1\bin;C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin;C:\Python27\Scripts;C:\Python27;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Program Files\Java\jdk-21\bin;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Launcher\;C:\Users\ashis\AppData\Local\Microsoft\WindowsApps;C:\Users\ashis\AppData\Local\Programs\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\Azure Data Studio\bin;C:\Program Files\MongoDB\Server\6.0\bin;C:\Program Files\MongoDB\mongosh-1.6.0-win32-x64\bin;C:\mongosh-1.6.2\bin;C:\Users\ashis\AppData\Roaming\npm;C:\apache-maven\apache-maven-3.9.1\bin;C:\Python27\Scripts;C:\Python27;;C:\Program Files\Java\jdk-21\bin
+JRE paths:	;C:\Program Files\Common Files\Oracle\Java\javapath;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\MinGW\bin;C:\TDM-GCC-32\bin;C:\TDM-GCC-64\bin;C:\Program Files\Java\jdk-18.0.1.1\bin;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\mongosh-1.6.0\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\apache-maven\apache-maven-3.9.1\bin;C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin;C:\Python27\Scripts;C:\Python27;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Program Files\Java\jdk-21\bin;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Launcher\;C:\Users\ashis\AppData\Local\Microsoft\WindowsApps;C:\Users\ashis\AppData\Local\Programs\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\Azure Data Studio\bin;C:\Program Files\MongoDB\Server\6.0\bin;C:\Program Files\MongoDB\mongosh-1.6.0-win32-x64\bin;C:\mongosh-1.6.2\bin;C:\Users\ashis\AppData\Roaming\npm;C:\apache-maven\apache-maven-3.9.1\bin;C:\Python27\Scripts;C:\Python27;;C:\Program Files\Java\jdk-21\bin
+Check launcher:	C:\Program Files\Common Files\Oracle\Java\javapath\bin\javaw.exe (not found)
+Check launcher:	C:\windows\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\Wbem\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\WindowsPowerShell\v1.0\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\OpenSSH\bin\javaw.exe (not found)
+Check launcher:	C:\MinGW\bin\javaw.exe (not found)
+Check launcher:	C:\TDM-GCC-32\bin\javaw.exe (not found)
+Check launcher:	C:\TDM-GCC-64\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Java\jdk-18.0.1.1\bin\javaw.exe (not found)
+Check launcher:	C:\ProgramData\chocolatey\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\system32\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\Wbem\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\WindowsPowerShell\v1.0\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\OpenSSH\bin\javaw.exe (not found)
+Check launcher:	C:\mongosh-1.6.0\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\nodejs\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Git\cmd\bin\javaw.exe (not found)
+Check launcher:	C:\apache-maven\apache-maven-3.9.1\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin\javaw.exe (not found)
+Check launcher:	C:\Python27\Scripts\bin\javaw.exe (not found)
+Check launcher:	C:\Python27\bin\javaw.exe (not found)
+Check launcher:	C:\Users\ashis\AppData\Local\Programs\Python\Python312\bin\javaw.exe (not found)
+Check launcher:	C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Java\jdk-21\bin\javaw.exe (OK)
+Check javac:	C:\Program Files\Java\jdk-21\bin\javac.exe (OK)
+Version string: 1.021.000_002 / 64-Bit (OK)
+Launcher:	C:\Program Files\Java\jdk-21\bin\javaw.exe
+Launcher args:	-jar "C:\Users\ashis\OneDrive\Documents\Project\app.exe"
+Args length:	56/32768 chars
+Exit code:	0
+
+
+Version:	3.50
+CmdLine:	C:\Users\ashis\OneDrive\Documents\Project\app.exe --l4j-debug
+JNI:		No
+WOW64:		Yes
+Working dir:	C:\Users\ashis\OneDrive\Documents\Project\.
+Requires JDK:	Yes
+Requires 64-Bit: No
+Java min ver:	1.008.000
+Java max ver:	
+Substitute:	JAVA_HOME = 
+Substitute:	PATH = C:\Program Files\Common Files\Oracle\Java\javapath;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\MinGW\bin;C:\TDM-GCC-32\bin;C:\TDM-GCC-64\bin;C:\Program Files\Java\jdk-18.0.1.1\bin;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\mongosh-1.6.0\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\apache-maven\apache-maven-3.9.1\bin;C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin;C:\Python27\Scripts;C:\Python27;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Program Files\Java\jdk-21\bin;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Launcher\;C:\Users\ashis\AppData\Local\Microsoft\WindowsApps;C:\Users\ashis\AppData\Local\Programs\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\Azure Data Studio\bin;C:\Program Files\MongoDB\Server\6.0\bin;C:\Program Files\MongoDB\mongosh-1.6.0-win32-x64\bin;C:\mongosh-1.6.2\bin;C:\Users\ashis\AppData\Roaming\npm;C:\apache-maven\apache-maven-3.9.1\bin;C:\Python27\Scripts;C:\Python27;;C:\Program Files\Java\jdk-21\bin
+JRE paths:	;C:\Program Files\Common Files\Oracle\Java\javapath;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\MinGW\bin;C:\TDM-GCC-32\bin;C:\TDM-GCC-64\bin;C:\Program Files\Java\jdk-18.0.1.1\bin;C:\ProgramData\chocolatey\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\mongosh-1.6.0\bin;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\apache-maven\apache-maven-3.9.1\bin;C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin;C:\Python27\Scripts;C:\Python27;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Program Files\Java\jdk-21\bin;C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\ashis\AppData\Local\Programs\Python\Python312\;C:\Users\ashis\AppData\Local\Programs\Python\Launcher\;C:\Users\ashis\AppData\Local\Microsoft\WindowsApps;C:\Users\ashis\AppData\Local\Programs\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;C:\Program Files\Azure Data Studio\bin;C:\Program Files\MongoDB\Server\6.0\bin;C:\Program Files\MongoDB\mongosh-1.6.0-win32-x64\bin;C:\mongosh-1.6.2\bin;C:\Users\ashis\AppData\Roaming\npm;C:\apache-maven\apache-maven-3.9.1\bin;C:\Python27\Scripts;C:\Python27;;C:\Program Files\Java\jdk-21\bin
+Check launcher:	C:\Program Files\Common Files\Oracle\Java\javapath\bin\javaw.exe (not found)
+Check launcher:	C:\windows\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\Wbem\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\WindowsPowerShell\v1.0\bin\javaw.exe (not found)
+Check launcher:	C:\windows\System32\OpenSSH\bin\javaw.exe (not found)
+Check launcher:	C:\MinGW\bin\javaw.exe (not found)
+Check launcher:	C:\TDM-GCC-32\bin\javaw.exe (not found)
+Check launcher:	C:\TDM-GCC-64\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Java\jdk-18.0.1.1\bin\javaw.exe (not found)
+Check launcher:	C:\ProgramData\chocolatey\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\system32\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\Wbem\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\WindowsPowerShell\v1.0\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\OpenSSH\bin\javaw.exe (not found)
+Check launcher:	C:\mongosh-1.6.0\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\nodejs\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Git\cmd\bin\javaw.exe (not found)
+Check launcher:	C:\apache-maven\apache-maven-3.9.1\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Apache\apache-tomcat-9.0.74\bin\bin\javaw.exe (not found)
+Check launcher:	C:\Python27\Scripts\bin\javaw.exe (not found)
+Check launcher:	C:\Python27\bin\javaw.exe (not found)
+Check launcher:	C:\Users\ashis\AppData\Local\Programs\Python\Python312\bin\javaw.exe (not found)
+Check launcher:	C:\Users\ashis\AppData\Local\Programs\Python\Python312\Scripts\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Java\jdk-21\bin\javaw.exe (OK)
+Check javac:	C:\Program Files\Java\jdk-21\bin\javac.exe (OK)
+Version string: 1.021.000_002 / 64-Bit (OK)
+Launcher:	C:\Program Files\Java\jdk-21\bin\javaw.exe
+Launcher args:	-jar "C:\Users\ashis\OneDrive\Documents\Project\app.exe"
+Args length:	56/32768 chars
+Exit code:	0

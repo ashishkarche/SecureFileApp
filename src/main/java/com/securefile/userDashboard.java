@@ -19,7 +19,7 @@ import java.awt.event.*;
 
 public class userDashboard {
     
-    public static String ImagePath = "src/main/resources/plus.png"; // Replace Image Path with your Image path
+    public static String ImagePath = "src/main/java/plus.png"; // Replace Image Path with your Image path
     
     public static void createAndShowDashboardGUI(String username) {
         JFrame dashboardFrame = new JFrame("Dashboard - " + username);

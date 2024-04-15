@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class DatabaseConfig {
-    private static final String PROPERTIES_FILE = "src/main/resources/Properties/database.properties";
+    private static final String PROPERTIES_FILE = "src/main/java/Properties/database.properties";
     // Properties object to hold the configuration values
     private static final Properties props = new Properties();
     
