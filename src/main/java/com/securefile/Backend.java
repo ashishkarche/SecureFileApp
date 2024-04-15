@@ -1,33 +1,14 @@
 package com.securefile;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.io.*;
+import java.net.*;
+import java.security.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
-import java.util.UUID;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import java.util.*;
+import javax.crypto.*;
 import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -38,11 +19,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import DatabaseManager.DatabaseConfig;
-import FileManager.FileDecryptor;
-import FileManager.FileEncryptor;
+import FileManager.*;
 import MailserverManager.EmailConfigLoader;
 import UserManager.UserAuthentication;
-import UserManager.UserSession;
 
 public class Backend {
     // Database Connection Constants
@@ -53,15 +32,11 @@ public class Backend {
     // Table Names
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
     private static final String KEY_TABLE = "keys";
-    private static final String UPLOADED_FILES_TABLE = "uploaded_files"; 
     private static final String USER_TABLE = "users";
 
     // Encryption Keys
     private static SecretKey aesSecretKey;
     private static SecretKey desSecretKey;
-
-    // User session
-    private static UserSession userSession = UserSession.getInstance();
 
     // Initialize encryption keys
     public static void initializeEncryptionKeys() {
@@ -146,28 +121,12 @@ public class Backend {
         }
     }
 
-    // Store uploaded file in the database
-    public static void storeUploadedFile(String fileName, byte[] fileData, int fileId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection
-                        .prepareStatement(
-                                "INSERT INTO `" + UPLOADED_FILES_TABLE
-                                        + "` (file_id,file_name, file_data) VALUES (?, ?, ?)")) {
-            statement.setInt(1, fileId);
-            statement.setString(2, fileName);
-            statement.setBytes(3, fileData);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     // Method to obtain the file ID from the encrypted_files table
     public static int obtainFileId(String fileName, int userId) {
         int fileId = -1; // Default value indicating failure
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT file_id FROM "+ ENCRYPTED_FILES_TABLE+" WHERE file_name = ? AND user_id = ?");) {
+                        "SELECT file_id FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_name = ? AND user_id = ?");) {
             statement.setString(1, fileName);
             statement.setInt(2, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -246,11 +205,6 @@ public class Backend {
             e.printStackTrace();
             return new Object[0][0]; // Return an empty array in case of an error
         }
-    }
-
-    // Retrieve sender's email from the user session
-    public static String getSenderEmail() {
-        return userSession.getEmail();
     }
 
     // Method to generate a secure download link
@@ -362,7 +316,7 @@ public class Backend {
 
     public static boolean emailExists(String email) {
         // SQL query to check the existence of an email
-        String query = "SELECT COUNT(email) FROM "+USER_TABLE+" WHERE email = ?";
+        String query = "SELECT COUNT(email) FROM " + USER_TABLE + " WHERE email = ?";
 
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(query)) {
@@ -398,7 +352,7 @@ public class Backend {
         }
 
         // SQL update statement to update the user's password
-        String query = "UPDATE users SET password = ? WHERE email = ?";
+        String query = "UPDATE " + USER_TABLE + " SET password = ? WHERE email = ?";
 
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(query)) {
@@ -439,7 +393,7 @@ public class Backend {
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("apikey",EmailConfigLoader.getSmtpApiKey());
+                return new PasswordAuthentication("apikey", EmailConfigLoader.getSmtpApiKey());
             }
         });
 

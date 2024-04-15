@@ -9,13 +9,17 @@ import DatabaseManager.DatabaseConfig;
 public class UserQueries {
     private static final String DB_URL = DatabaseConfig.getUrl();
     private static final String DB_USER = DatabaseConfig.getUser();
-    private static final String DB_PASSWORD = DatabaseConfig.getPassword(); 
+    private static final String DB_PASSWORD = DatabaseConfig.getPassword();
+
+    private static final String USER_TABLE = "users";
+    private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
 
     public static Object[][] fetchAllUsersData() {
         List<User> userList = new ArrayList<>();
 
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection.prepareStatement("SELECT id, username, email FROM users");
+                PreparedStatement statement = connection
+                        .prepareStatement("SELECT id, username, email FROM " + USER_TABLE);
                 ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
@@ -44,14 +48,14 @@ public class UserQueries {
     public static boolean deleteUser(int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             // Delete associated rows in the encrypted_files table
-            String deleteFilesSql = "DELETE FROM encrypted_files WHERE user_id = ?";
+            String deleteFilesSql = "DELETE FROM " + ENCRYPTED_FILES_TABLE + " WHERE user_id = ?";
             try (PreparedStatement deleteFilesStatement = connection.prepareStatement(deleteFilesSql)) {
                 deleteFilesStatement.setInt(1, userId);
                 deleteFilesStatement.executeUpdate();
             }
 
             // Now delete the user
-            String deleteUserSql = "DELETE FROM users WHERE id = ?";
+            String deleteUserSql = "DELETE FROM " + USER_TABLE + " WHERE id = ?";
             try (PreparedStatement deleteUserStatement = connection.prepareStatement(deleteUserSql)) {
                 deleteUserStatement.setInt(1, userId);
                 int rowsAffected = deleteUserStatement.executeUpdate();
@@ -64,4 +68,3 @@ public class UserQueries {
     }
 
 }
-

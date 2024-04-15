@@ -1,21 +1,10 @@
 package com.securefile;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import UserManager.UserSession;
-
+import javax.swing.*;
+import UserManager.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-
-import UserManager.UserQueries;
+import java.awt.event.*;
+import javax.swing.table.*;
 
 
 public class adminDashboard {

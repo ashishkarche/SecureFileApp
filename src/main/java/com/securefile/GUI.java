@@ -418,7 +418,7 @@ public class GUI {
                                                                                            // get fileId
 
                         // Store the uploaded file in the database
-                        Backend.storeUploadedFile(selectedFile.getName(), fileData, fileId);
+                        FileManagement.storeUploadedFile(selectedFile.getName(), fileData, fileId);
 
                         // Show upload success message
                         JOptionPane.showMessageDialog(fileUploadFrame, "File uploaded successfully!",

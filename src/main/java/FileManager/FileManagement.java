@@ -9,8 +9,9 @@ import java.nio.file.Paths;
 public class FileManagement {
     private static final String DB_URL = DatabaseConfig.getUrl();
     private static final String DB_USER = DatabaseConfig.getUser();
-    private static final String DB_PASSWORD = DatabaseConfig.getPassword(); 
+    private static final String DB_PASSWORD = DatabaseConfig.getPassword();
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
+    private static final String UPLOADED_FILES_TABLE = "uploaded_files";
 
     public static void uploadFileToServer(String filePath, byte[] encryptedData, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
@@ -30,7 +31,7 @@ public class FileManagement {
     public static byte[] downloadEncryptedFileFromServer(int fileId, int userId) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT encrypted_data FROM encrypted_files WHERE file_id = ? AND user_id = ?")) {
+                        "SELECT encrypted_data FROM " + ENCRYPTED_FILES_TABLE + " WHERE file_id = ? AND user_id = ?")) {
             statement.setInt(1, fileId);
             statement.setInt(2, userId);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -57,5 +58,20 @@ public class FileManagement {
             return false;
         }
     }
-}
 
+        // Store uploaded file in the database
+        public static void storeUploadedFile(String fileName, byte[] fileData, int fileId) {
+            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                    PreparedStatement statement = connection
+                            .prepareStatement(
+                                    "INSERT INTO `" + UPLOADED_FILES_TABLE
+                                            + "` (file_id,file_name, file_data) VALUES (?, ?, ?)")) {
+                statement.setInt(1, fileId);
+                statement.setString(2, fileName);
+                statement.setBytes(3, fileData);
+                statement.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+}
