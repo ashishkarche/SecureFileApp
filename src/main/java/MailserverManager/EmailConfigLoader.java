@@ -1,20 +1,36 @@
 package MailserverManager;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class EmailConfigLoader {
-    private static final String PROPERTIES_FILE = "src/main/java/Properties/email.properties";
+    private static final String PROPERTIES_FILE = "/Properties/email.properties";
     private static final Properties emailProps = new Properties();
 
     static {
-        try (FileInputStream input = new FileInputStream(PROPERTIES_FILE)) {
-            emailProps.load(input);
+        InputStream input = null;
+        try {
+            input = EmailConfigLoader.class.getResourceAsStream(PROPERTIES_FILE);
+            if (input == null) {
+                System.out.println("Unable to find " + PROPERTIES_FILE);
+            } else {
+                emailProps.load(input);
+            }
         } catch (IOException ex) {
             System.out.println("Failed to load the email configuration file.");
             System.out.println("Exception: " + ex.getMessage());
             ex.printStackTrace();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    System.out.println("Failed to close the input stream.");
+                    System.out.println("Exception: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -34,7 +50,7 @@ public class EmailConfigLoader {
     public static String getSmtpStartTls() {
         return emailProps.getProperty("mail.smtp.starttls.enable");
     }
-    
+
     public static String getSmtpUsername() {
         return emailProps.getProperty("mail.smtp.username");
     }

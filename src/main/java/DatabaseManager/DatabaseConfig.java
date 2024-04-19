@@ -1,26 +1,40 @@
 package DatabaseManager;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public class DatabaseConfig {
-    private static final String PROPERTIES_FILE = "src/main/java/Properties/database.properties";
-    // Properties object to hold the configuration values
+    private static final String PROPERTIES_FILE = "/Properties/database.properties";
     private static final Properties props = new Properties();
     
     static {
-        try (FileInputStream input = new FileInputStream(PROPERTIES_FILE)) {
-            // Loading properties from file
-            props.load(input);
+        InputStream input = null;
+        try {
+            input = DatabaseConfig.class.getResourceAsStream(PROPERTIES_FILE);
+            if (input == null) {
+                System.out.println("Unable to find " + PROPERTIES_FILE);
+            } else {
+                // Loading properties from file
+                props.load(input);
+            }
         } catch (IOException ex) {
             System.out.println("Failed to load the configuration file.");
             System.out.println("Exception: " + ex.getMessage());
             ex.printStackTrace();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    System.out.println("Failed to close the input stream.");
+                    System.out.println("Exception: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
         }
     }
     
-    // Methods to retrieve property values
     public static String getUrl() {
         return props.getProperty("db.url");
     }

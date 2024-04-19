@@ -25,6 +25,7 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.security.GeneralSecurityException;
 import java.util.Timer;
+import java.net.URL;
 
 public class GUI {
     public static JFrame loginFrame;
@@ -42,6 +43,16 @@ public class GUI {
 
     // Create a flag to track email verification
     public static AtomicBoolean emailVerified = new AtomicBoolean(false);
+
+    public static ImageIcon createImageIcon(String path) {
+        URL imgURL = GUI.class.getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL);
+        } else {
+            System.err.println("Couldn't find file: " + path);
+            return null;
+        }
+    }
 
     public static void createAndShowLoginGUI() {
 
@@ -167,7 +178,7 @@ public class GUI {
         fileUploadFrame.setSize(500, 500);
         fileUploadFrame.setLayout(new GridBagLayout());
 
-        JLabel plusSignLabel = new JLabel(new ImageIcon(ImagePath));
+        JLabel plusSignLabel = new JLabel(createImageIcon("/plus.png"));
         uploadLabel = new JLabel("Select File");
         uploadLabel.setFont(new Font("Arial", Font.BOLD, 12));
         JButton encryptButton = new JButton("Upload file");
@@ -347,7 +358,7 @@ public class GUI {
                         }
                     }
                 } else {
-                    JOptionPane.showMessageDialog(loginFrame, "Email not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(loginFrame, "Email is not registered", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

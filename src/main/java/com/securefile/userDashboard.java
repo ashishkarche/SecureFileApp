@@ -18,9 +18,9 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class userDashboard {
-    
-    public static String ImagePath = "src/main/java/plus.png"; // Replace Image Path with your Image path
-    
+
+    public static String ImagePath = "/plus.png"; // Replace Image Path with your Image path
+
     public static void createAndShowDashboardGUI(String username) {
         JFrame dashboardFrame = new JFrame("Dashboard - " + username);
         dashboardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -29,8 +29,8 @@ public class userDashboard {
         JPanel dashboardPanel = new JPanel(new BorderLayout());
         dashboardFrame.add(dashboardPanel);
 
-        // Add the plus.png icon in the right-hand corner
-        ImageIcon plusIcon = new ImageIcon(ImagePath);
+        // Load the image as a resource
+        ImageIcon plusIcon = new ImageIcon(userDashboard.class.getResource(ImagePath));
         Image smallPlusImage = plusIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
         ImageIcon smallPlusIcon = new ImageIcon(smallPlusImage);
         JLabel plusLabel = new JLabel(smallPlusIcon);
@@ -261,6 +261,7 @@ public class userDashboard {
         GUI.usernameField.setText("");
         GUI.passwordField.setText("");
     }
+
     public static void showDashboard() {
         String username = UserSession.getInstance().getUsername();
         createAndShowDashboardGUI(username);
