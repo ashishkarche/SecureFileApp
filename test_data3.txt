@@ -2,6 +2,7 @@
 
 Before discussing about the proposed system in detail, we have to know about security issues in cloud environment and importance of AES, DES  & multiparty encryption algorithms.
 
+
 o	Cloud computing security issue:
  
 1.	Cloud Security: Often referred to as "cloud security," this domain encompasses a wide range of measures aimed at protecting data, applications, and infrastructure within cloud environments. It involves the implementation of policies, technologies, and controls to mitigate security risks.
