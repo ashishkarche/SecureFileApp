@@ -61,7 +61,7 @@ public class adminDashboard {
                 adminDashboardFrame.dispose();
 
                 // Show login frame
-                GUI.loginFrame.setVisible(true);
+                LoginGUI.loginFrame.setVisible(true);
             }
         });
 

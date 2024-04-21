@@ -33,6 +33,8 @@ public class Backend {
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
     private static final String KEY_TABLE = "keys";
     private static final String USER_TABLE = "users";
+    private static final String ADMIN_TABLE = "admins";
+
 
     // Encryption Keys
     private static SecretKey aesSecretKey;
@@ -161,12 +163,13 @@ public class Backend {
         return outputStream.toByteArray();
     }
 
-    public static boolean authenticateAdmin(String username, String password) {
+    public static boolean authenticateAdmin(String username, String password, String ipAddress) {
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
                 PreparedStatement statement = connection.prepareStatement(
-                        "SELECT id FROM admins WHERE username = ? AND password = ?")) {
+                        "SELECT id FROM " + ADMIN_TABLE + " WHERE username = ? AND password = ? AND ip_address = ?")) {
             statement.setString(1, username);
             statement.setString(2, password);
+            statement.setString(3, ipAddress);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next(); // If result set has at least one row, admin authentication is successful
             }
@@ -175,11 +178,21 @@ public class Backend {
             return false;
         }
     }
+    
 
     public static boolean doesFileExist(String fileName, int userId) {
-        return UserAuthentication.isFieldExists("file_name", fileName, ENCRYPTED_FILES_TABLE)
-                && UserAuthentication.isFieldExists("user_id",
-                        String.valueOf(userId), ENCRYPTED_FILES_TABLE);
+        // Check if the file exists for any user
+        boolean fileExistsForAnyUser = UserAuthentication.isFieldExists("file_name", fileName, ENCRYPTED_FILES_TABLE);
+
+        if (fileExistsForAnyUser) {
+            // If the file exists for any user, check if it also exists for the specified
+            // user
+            return UserAuthentication.isFieldExists("file_name", fileName, ENCRYPTED_FILES_TABLE)
+                    && UserAuthentication.isFieldExists("user_id", String.valueOf(userId), ENCRYPTED_FILES_TABLE);
+        } else {
+            // If the file does not exist for any user, return false
+            return false;
+        }
     }
 
     // Method to fetch file data from the server

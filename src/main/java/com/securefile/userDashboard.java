@@ -157,14 +157,14 @@ public class userDashboard {
 
         plusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                GUI.fileUploadFrame.setVisible(true);
+                LoginGUI.fileUploadFrame.setVisible(true);
                 dashboardFrame.setVisible(false);
             }
         });
 
         // The window listener to the `fileUploadFrame` in Java Swing. When the
         // window is closing, it will make the `dashboardFrame` visible.
-        GUI.fileUploadFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+        LoginGUI.fileUploadFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 dashboardFrame.setVisible(true);
@@ -183,7 +183,7 @@ public class userDashboard {
                 dashboardFrame.dispose();
 
                 // Show login frame
-                GUI.loginFrame.setVisible(true);
+                LoginGUI.loginFrame.setVisible(true);
             }
         });
 
@@ -258,8 +258,8 @@ public class userDashboard {
     }
 
     public static void clearLoginFields() {
-        GUI.usernameField.setText("");
-        GUI.passwordField.setText("");
+        LoginGUI.usernameField.setText("");
+        LoginGUI.passwordField.setText("");
     }
 
     public static void showDashboard() {
