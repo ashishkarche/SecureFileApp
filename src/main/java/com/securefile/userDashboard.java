@@ -2,6 +2,8 @@ package com.securefile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -63,6 +65,14 @@ public class userDashboard {
         downloadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                // Check network connection before proceeding
+                if (!isInternetReachable()) {
+                    // Disable buttons and show alert for network error
+                    disableButtonsAndShowAlert(dashboardFrame);
+                    return;
+                }
+
                 int selectedRow = fileTable.getSelectedRow();
                 if (selectedRow != -1) {
                     int fileId = (int) fileTable.getValueAt(selectedRow, 0);
@@ -115,6 +125,14 @@ public class userDashboard {
         shareButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                // Check network connection before proceeding
+                if (!isInternetReachable()) {
+                    // Disable buttons and show alert for network error
+                    disableButtonsAndShowAlert(dashboardFrame);
+                    return;
+                }
+
                 // Get the selected row in the table
                 int selectedRow = fileTable.getSelectedRow();
                 if (selectedRow != -1) {
@@ -212,6 +230,20 @@ public class userDashboard {
 
     }
 
+    // Method to disable buttons and show alert for network error
+    private static void disableButtonsAndShowAlert(JFrame dashboardFrame) {
+        // Disable buttons
+        Component[] components = dashboardFrame.getRootPane().getContentPane().getComponents();
+        for (Component component : components) {
+            if (component instanceof JButton) {
+                ((JButton) component).setEnabled(false);
+            }
+        }
+        // Show alert for network error
+        JOptionPane.showMessageDialog(dashboardFrame, "Network error. You are offline.", "Network Error",
+                JOptionPane.ERROR_MESSAGE);
+    }
+
     private static class FileTableModel extends AbstractTableModel {
         private String[] columnNames = { "File No.", "File Name" };
         private List<Object[]> data;
@@ -254,6 +286,21 @@ public class userDashboard {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             return data.get(rowIndex)[columnIndex];
+        }
+    }
+
+    // Method to check internet connectivity
+    private static boolean isInternetReachable() {
+        try {
+            // Make a HTTP request to a known reliable server
+            HttpURLConnection urlConn = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
+            urlConn.setRequestProperty("User-Agent", "Test");
+            urlConn.setRequestProperty("Connection", "close");
+            urlConn.setConnectTimeout(5000);
+            urlConn.connect();
+            return (urlConn.getResponseCode() == 200);
+        } catch (IOException e) {
+            return false;
         }
     }
 

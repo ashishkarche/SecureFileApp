@@ -15,18 +15,22 @@ public class UserQueries {
     private static final String ENCRYPTED_FILES_TABLE = "encrypted_files";
 
     public static Object[][] fetchAllUsersData() {
-        List<User> userList = new ArrayList<>();
+        List<Object[]> userList = new ArrayList<>();
+
+        String query = "SELECT u.id, u.username, u.email, ef.file_name " +
+                       "FROM " + USER_TABLE + " u " +
+                       "LEFT JOIN " + ENCRYPTED_FILES_TABLE + " ef ON u.id = ef.user_id";
 
         try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement statement = connection
-                        .prepareStatement("SELECT id, username, email FROM " + USER_TABLE);
-                ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
                 String username = resultSet.getString("username");
                 String email = resultSet.getString("email");
-                userList.add(new User(id, username, email));
+                String fileName = resultSet.getString("file_name");
+                userList.add(new Object[] { id, username, email, fileName });
             }
 
         } catch (SQLException ex) {
@@ -34,15 +38,7 @@ public class UserQueries {
         }
 
         // Convert the list of users to a two-dimensional array
-        Object[][] userData = new Object[userList.size()][3];
-        for (int i = 0; i < userList.size(); i++) {
-            User user = userList.get(i);
-            userData[i][0] = user.getId();
-            userData[i][1] = user.getUsername();
-            userData[i][2] = user.getEmail();
-        }
-
-        return userData;
+        return userList.toArray(new Object[0][0]);
     }
 
     public static boolean deleteUser(int userId) {
@@ -66,5 +62,4 @@ public class UserQueries {
             return false;
         }
     }
-
 }

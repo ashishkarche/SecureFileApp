@@ -8,7 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -250,7 +252,15 @@ public class LoginGUI {
                 loginFrame.setVisible(false);
             }
         });
+        // Add a WindowListener to clear fields when the frame is closed
+        registrationFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                clearRegistrationFields();
+            }
+        });
 
+        // Registration button action listener
         regRegisterButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -262,7 +272,7 @@ public class LoginGUI {
                             JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                String email = regEmailField.getText(); // Retrieve email
+                String email = regEmailField.getText();
                 String username = regUsernameField.getText();
                 char[] passwordChars = regPasswordField.getPassword();
                 String password = new String(passwordChars);
@@ -290,14 +300,28 @@ public class LoginGUI {
                 }
 
                 // Register the user
-                if (UserAuthentication.registerUser(email, username, password, ipAddress)) { // Register user with email
+                if (UserAuthentication.registerUser(email, username, password, ipAddress)) {
                     JOptionPane.showMessageDialog(registrationFrame, "Registration successful", "Registration",
                             JOptionPane.INFORMATION_MESSAGE);
+
+                    // Make input fields editable again
+                    regEmailField.setEditable(true);
+                    regUsernameField.setEditable(true);
+                    regPasswordField.setEditable(true);
+
+                    // Clear the input fields
+                    clearRegistrationFields();
+
                     registrationFrame.setVisible(false);
                     loginFrame.setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(registrationFrame, "Registration failed", "Registration Error",
                             JOptionPane.ERROR_MESSAGE);
+
+                    // Make input fields editable again in case of failure
+                    regEmailField.setEditable(true);
+                    regUsernameField.setEditable(true);
+                    regPasswordField.setEditable(true);
                 }
             }
         });
@@ -387,6 +411,13 @@ public class LoginGUI {
                 if (UserAuthentication.isValidEmail(emailAddress)) {
                     int verificationCode = generateVerificationCode();
                     Backend.sendVerificationEmail(emailAddress, verificationCode);
+
+                    // Disable input fields
+                    regEmailField.setEditable(false);
+                    regUsernameField.setEditable(false);
+                    regPasswordField.setEditable(false);
+
+                    // Prompt the user to enter the verification code
                     enterVerificationCode(verificationCode, regRegisterButton);
                 } else {
                     JOptionPane.showMessageDialog(registrationFrame, "Invalid email address.", "Error",
@@ -398,6 +429,7 @@ public class LoginGUI {
         encryptButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 String filePath = (String) plusSignLabel.getClientProperty("filePath");
                 // Get the currently logged-in user's ID
                 int userId = UserSession.getInstance().getUserId();
@@ -418,9 +450,24 @@ public class LoginGUI {
                         File selectedFile = new File(filePath);
                         byte[] fileData = Files.readAllBytes(selectedFile.toPath());
 
-                        // Encrypt the file data using AES and DES
-                        byte[] combinedEncryptedData = Backend.encryptFileData(fileData);
-
+                        byte[] combinedEncryptedData;
+                        String fileExtension = FileManagement.getFileExtension(selectedFile);
+                        // Measure encryption time
+                        // long encryptionStartTime = System.nanoTime();
+                        if (fileExtension != null && (fileExtension.equals("txt") || fileExtension.equals("pdf")
+                                || fileExtension.equals("zip") || FileManagement.isImage(fileExtension)
+                                || fileExtension.equalsIgnoreCase("exe"))) {
+                            // Encrypt text, PDF, zip, image, or exe file using AES
+                            combinedEncryptedData = Backend.encryptFileData(fileData);
+                        } else {
+                            // Unsupported file type
+                            JOptionPane.showMessageDialog(fileUploadFrame,
+                                    "Unsupported file type. Please select a text file, a PDF file, a zip file, an image file, or an executable file.",
+                                    "Unsupported File Type", JOptionPane.ERROR_MESSAGE);
+                            return; // Exit the method
+                        }
+                        // long encryptionEndTime = System.nanoTime();
+                        // long encryptionDuration = encryptionEndTime - encryptionStartTime;
                         // Upload the file and encrypted data to the server
                         FileManagement.uploadFileToServer(filePath, combinedEncryptedData, userId);
 
@@ -429,6 +476,15 @@ public class LoginGUI {
 
                         // Store the uploaded file in the database
                         FileManagement.storeUploadedFile(selectedFile.getName(), fileData, fileId);
+
+                        // Measure decryption time
+                        // long decryptionStartTime = System.nanoTime();
+                        // byte[] decryptedData = Backend.decryptFileData(combinedEncryptedData);
+                        // long decryptionEndTime = System.nanoTime();
+                        // long decryptionDuration = decryptionEndTime - decryptionStartTime;
+
+                        // Log the times to a file
+                        // logTimesToFile(selectedFile.getName(), fileData.length, encryptionDuration, decryptionDuration);
 
                         // Show upload success message
                         JOptionPane.showMessageDialog(fileUploadFrame, "File uploaded successfully!",
@@ -453,7 +509,13 @@ public class LoginGUI {
         plusSignLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 JFileChooser fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+
+                // Set the file filter to accept multiple file types
+                FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                        "Text Files (*.txt), PDF Files (*.pdf), ZIP Files (*.zip), Image Files (*.png, *.jpg, *.gif), Executable Files (*.exe)",
+                        "txt", "pdf", "zip", "png", "jpg", "gif", "exe");
+                fileChooser.setFileFilter(filter);
+
                 int result = fileChooser.showOpenDialog(fileUploadFrame);
                 if (result == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
@@ -481,6 +543,27 @@ public class LoginGUI {
 
         // Display the login frame
         loginFrame.setVisible(true);
+    }
+
+    // Method to log encryption and decryption times to a file
+    // private static void logTimesToFile(String fileName, long fileSize, long encryptionTime, long decryptionTime) {
+    //     try (BufferedWriter writer = new BufferedWriter(
+    //             new FileWriter("encryption_decryption_times_report.txt", true))) {
+    //         writer.write("File Name: " + fileName);
+    //         writer.write(", File Size: " + fileSize + " bytes");
+    //         writer.write(", Encryption Time: " + encryptionTime + " ns");
+    //         writer.write(", Decryption Time: " + decryptionTime + " ns");
+    //         writer.newLine();
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
+
+    // Method to clear registration input fields
+    private static void clearRegistrationFields() {
+        regEmailField.setText("");
+        regUsernameField.setText("");
+        regPasswordField.setText("");
     }
 
     private static int generateVerificationCode() {
@@ -523,9 +606,27 @@ public class LoginGUI {
     private static void checkNetworkConnection() {
         boolean isConnected = isInternetReachable();
         if (isConnected) {
+            // Enable buttons and inputs
+            enableComponents(loginFrame, true);
             internetStatusLabel.setText("Internet status: Connected");
         } else {
+            // Disable buttons and inputs
+            enableComponents(loginFrame, false);
             internetStatusLabel.setText("Internet status: Disconnected");
+            // Show alert for network error
+            JOptionPane.showMessageDialog(loginFrame, "Network error. You are offline.", "Network Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Method to enable or disable all components in a container
+    private static void enableComponents(Container container, boolean enable) {
+        Component[] components = container.getComponents();
+        for (Component component : components) {
+            if (component instanceof JPanel) {
+                enableComponents((Container) component, enable);
+            }
+            component.setEnabled(enable);
         }
     }
 

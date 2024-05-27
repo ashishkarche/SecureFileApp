@@ -35,7 +35,6 @@ public class Backend {
     private static final String USER_TABLE = "users";
     private static final String ADMIN_TABLE = "admins";
 
-
     // Encryption Keys
     private static SecretKey aesSecretKey;
     private static SecretKey desSecretKey;
@@ -44,7 +43,6 @@ public class Backend {
     public static void initializeEncryptionKeys() {
         try {
             aesSecretKey = retrieveOrCreateKey("aes_key", "AES");
-            desSecretKey = retrieveOrCreateKey("des_key", "DES");
         } catch (GeneralSecurityException | SQLException e) {
             handleException(e);
         }
@@ -142,25 +140,45 @@ public class Backend {
         return fileId;
     }
 
-    public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
-        byte[] encryptedDataAES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
-        byte[] encryptedDataDES = FileEncryptor.encrypt(fileData, desSecretKey, "DES");
+    private static byte[] encryptFiledata(byte[] fileData) throws GeneralSecurityException, IOException {
+        byte[] encryptedDataES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
+        byte[] encryptedDatadES = FileEncryptor.encrypt(fileData, desSecretKey, "DES"); 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(encryptedDataAES);
-        outputStream.write(encryptedDataDES);
+        outputStream.write(encryptedDataES);
+        outputStream.write(encryptedDatadES);
         return outputStream.toByteArray();
     }
 
-    public static byte[] decryptFileData(byte[] encryptedData) throws GeneralSecurityException, IOException {
+    private static byte[] decryptFiledata(byte[] encryptedData) throws GeneralSecurityException, IOException {
         int halfLength = encryptedData.length / 2;
-        byte[] encryptedDataAES = Arrays.copyOfRange(encryptedData, 0, halfLength);
-        byte[] encryptedDataDES = Arrays.copyOfRange(encryptedData, halfLength, encryptedData.length);
-        byte[] decryptedDataAES = FileDecryptor.decrypt(encryptedDataAES, aesSecretKey, "AES");
-        byte[] decryptedDataDES = FileDecryptor.decrypt(encryptedDataDES, desSecretKey, "DES");
+        byte[] encryptedDataES = Arrays.copyOfRange(encryptedData, 0, halfLength);
+        byte[] encryptedDatadES = Arrays.copyOfRange(encryptedData, halfLength, encryptedData.length);
+        byte[] decryptedDataES = FileDecryptor.decrypt(encryptedDataES, aesSecretKey, "AES");
+        byte[] decryptedDatadES = FileDecryptor.decrypt(encryptedDatadES, desSecretKey, "DES"); // Dummy DES decryption
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(decryptedDataAES);
-        outputStream.write(decryptedDataDES);
+        outputStream.write(decryptedDataES);
+        outputStream.write(decryptedDatadES);
         return outputStream.toByteArray();
+    }
+    
+    public static byte[] encryptFileData(byte[] fileData) throws GeneralSecurityException, IOException {
+        byte[] encryptedDataAES = FileEncryptor.encrypt(fileData, aesSecretKey, "AES");
+        return encryptedDataAES;
+    }
+
+    private static byte[] encryptFileDataDES(byte[] fileData) throws GeneralSecurityException, IOException {
+        byte[] encryptedDataDES = FileEncryptor.encrypt(fileData, aesSecretKey, "DES");
+        return encryptedDataDES;
+    }
+
+    public static byte[] decryptFileData(byte[] encryptedData) throws GeneralSecurityException, IOException {
+        byte[] decryptedDataAES = FileDecryptor.decrypt(encryptedData, aesSecretKey, "AES");
+        return decryptedDataAES;
+    }
+
+    private static byte[] decryptFileDataDES(byte[] encryptedData) throws GeneralSecurityException, IOException {
+        byte[] decryptedDataDES = FileDecryptor.decrypt(encryptedData, aesSecretKey, "DES");
+        return decryptedDataDES;
     }
 
     public static boolean authenticateAdmin(String username, String password, String ipAddress) {
@@ -178,7 +196,6 @@ public class Backend {
             return false;
         }
     }
-    
 
     public static boolean doesFileExist(String fileName, int userId) {
         // Check if the file exists for any user

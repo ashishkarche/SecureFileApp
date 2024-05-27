@@ -1,0 +1,5 @@
+File Name: test_data4.txt, File Size: 640970 bytes, Encryption Time: 8951800 ns, Decryption Time: 8346401 ns
+File Name: 157204731_ExamForm.PDF, File Size: 256697 bytes, Encryption Time: 2394400 ns, Decryption Time: 2482000 ns
+File Name: UML_3.png, File Size: 74799 bytes, Encryption Time: 979200 ns, Decryption Time: 871600 ns
+File Name: windows_10_cmake_Release_graphviz-install-11.0.0-win64.exe, File Size: 5101654 bytes, Encryption Time: 28925700 ns, Decryption Time: 26617000 ns
+File Name: Test.zip, File Size: 219541 bytes, Encryption Time: 1284500 ns, Decryption Time: 1086800 ns

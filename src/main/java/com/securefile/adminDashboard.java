@@ -6,7 +6,6 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.table.*;
 
-
 public class adminDashboard {
 
     public static void createAndShowAdminDashboardGUI() {
@@ -19,7 +18,7 @@ public class adminDashboard {
 
         // Fetch users data from the database initially
         Object[][] userData = UserQueries.fetchAllUsersData();
-        String[] columnNames = { "User ID", "Username", "Email" };
+        String[] columnNames = { "User ID", "Username", "Email", "File Name" };
 
         JTable userTable = new JTable(userData, columnNames);
         JScrollPane scrollPane = new JScrollPane(userTable);

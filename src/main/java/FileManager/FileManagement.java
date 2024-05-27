@@ -4,6 +4,7 @@ import java.sql.*;
 
 import DatabaseManager.DatabaseConfig;
 
+import java.io.File;
 import java.nio.file.Paths;
 
 public class FileManagement {
@@ -59,19 +60,40 @@ public class FileManagement {
         }
     }
 
-        // Store uploaded file in the database
-        public static void storeUploadedFile(String fileName, byte[] fileData, int fileId) {
-            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                    PreparedStatement statement = connection
-                            .prepareStatement(
-                                    "INSERT INTO `" + UPLOADED_FILES_TABLE
-                                            + "` (file_id,file_name, file_data) VALUES (?, ?, ?)")) {
-                statement.setInt(1, fileId);
-                statement.setString(2, fileName);
-                statement.setBytes(3, fileData);
-                statement.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
+    // Store uploaded file in the database
+    public static void storeUploadedFile(String fileName, byte[] fileData, int fileId) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                PreparedStatement statement = connection
+                        .prepareStatement(
+                                "INSERT INTO `" + UPLOADED_FILES_TABLE
+                                        + "` (file_id,file_name, file_data) VALUES (?, ?, ?)")) {
+            statement.setInt(1, fileId);
+            statement.setString(2, fileName);
+            statement.setBytes(3, fileData);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to get file extension
+    public static String getFileExtension(File file) {
+        String fileName = file.getName();
+        int dotIndex = fileName.lastIndexOf(".");
+        if (dotIndex != -1 && dotIndex < fileName.length() - 1) {
+            return fileName.substring(dotIndex + 1).toLowerCase();
+        }
+        return null;
+    }
+
+    // Method to check if the file extension belongs to an image
+    public static boolean isImage(String extension) {
+        String[] imageExtensions = { "jpg", "jpeg", "png", "gif", "bmp" };
+        for (String ext : imageExtensions) {
+            if (extension.equalsIgnoreCase(ext)) {
+                return true;
             }
         }
+        return false;
+    }
 }
