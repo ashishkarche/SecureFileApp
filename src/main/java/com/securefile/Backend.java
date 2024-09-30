@@ -259,7 +259,7 @@ public class Backend {
         }
 
         // Construct and return the download link
-        String baseUrl = "https://filedownload2003.000webhostapp.com/download.php?token=" + token; // Replace with your
+        String baseUrl = "https://download-server-gamma.vercel.app/?token=" + token; // Replace with your
                                                                                                    // actual domain
         return baseUrl;
     }
